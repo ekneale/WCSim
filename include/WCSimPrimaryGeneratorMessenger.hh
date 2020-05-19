@@ -4,6 +4,8 @@
 class WCSimPrimaryGeneratorAction;
 class G4UIdirectory;
 class G4UIcmdWithAString;
+class G4UIcmdWithAnInteger;
+class G4UIcmdWithADouble;
 
 #include "G4UImessenger.hh"
 #include "globals.hh"
@@ -26,6 +28,9 @@ class WCSimPrimaryGeneratorMessenger: public G4UImessenger
   G4UIcmdWithAString* genCmd;
   G4UIcmdWithAString* fileNameCmd;
   G4UIcmdWithAString* fileNameCmdCosmics;
+  G4UIcmdWithAString* calibrationSource;
+  G4UIcmdWithAnInteger* calSourceNumParticles;
+  G4UIcmdWithADouble*  calSourceHalfAngle;
   
 };
 

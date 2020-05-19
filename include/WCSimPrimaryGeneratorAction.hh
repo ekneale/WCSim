@@ -64,6 +64,9 @@ private:
   WCSimDetectorConstruction*      myDetector;
   G4ParticleGun*                  particleGun;
   G4GeneralParticleSource*        MyGPS;  //T. Akiri: GPS to run Laser
+  G4ParticleGun*                  particleGunBarrel;
+  G4ParticleGun*                  particleGunBottom;
+  G4ParticleGun*                  particleGunTop;
   WCSimPrimaryGeneratorMessenger* messenger;
 
   // Variables set by the messenger
@@ -72,6 +75,12 @@ private:
   G4bool   useLaserEvt;  //T. Akiri: Laser flag
   G4bool   useGPSEvt;
   G4bool   useCosmics;
+  G4bool   useCalibration; //C. Pidcott: Calibrations flag
+  G4bool   useFullInjectors;
+  G4bool   useColBarrel;
+  G4bool   useColBottom;
+  G4bool   useColTop;
+  G4bool   useTimeTop;
   std::fstream inputFile;
   G4String vectorFileName;
   G4bool   GenerateVertexInRock;
@@ -101,6 +110,10 @@ private:
   // Set cosmics altitude
   G4double altCosmics;
 
+  //C. Pidcott: Calibrations variables
+  G4int c_particle;
+  G4double ledtheta;
+
  public:
 
   inline void SetMulineEvtGenerator(G4bool choice) { useMulineEvt = choice; }
@@ -118,6 +131,28 @@ private:
 
   inline void SetCosmicsGenerator(G4bool choice) { useCosmics = choice; }
   inline G4bool IsUsingCosmicsGenerator()  { return useCosmics; }
+
+  //C. Pidcott: Addition of function for the calibration flag
+  inline void SetCalibrationGenerator(G4bool choice) { useCalibration = choice; }
+  inline G4bool IsUsingCalibrationGenerator()  { return useCalibration; }
+
+  inline void SetFullInjectors(G4bool choice) { useFullInjectors = choice; }
+  inline G4bool IsUsingFullInjectors()  { return useFullInjectors; }
+
+  inline void SetCollimatedBarrel(G4bool choice) { useColBarrel = choice; }
+  inline G4bool IsUsingCollimatedBarrel()  { return useColBarrel; }
+  
+  inline void SetCollimatedBottom(G4bool choice) { useColBottom = choice; }
+  inline G4bool IsUsingCollimatedBottom()  { return useColBottom; }
+
+  inline void SetCollimatedTop(G4bool choice) { useColTop = choice; }
+  inline G4bool IsUsingCollimatedTop()  { return useColTop; }
+
+  inline void SetTimeTop(G4bool choice) { useTimeTop = choice; }
+  inline G4bool IsUsingTimeTop()  { return useTimeTop; }
+
+  inline void SetNumberCalibrationParticles(G4int choice) { c_particle = choice; }
+  inline void SetCalibrationSourceHalfAngle(G4int choice) { ledtheta = choice; }
 
   inline void OpenVectorFile(G4String fileName) 
   {
