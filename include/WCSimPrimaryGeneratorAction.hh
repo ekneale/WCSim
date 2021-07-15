@@ -80,7 +80,10 @@ private:
   G4bool   useColBarrel;
   G4bool   useColBottom;
   G4bool   useColTop;
+  G4bool   useSatTop;
+  G4bool   useSatBarrel;
   G4bool   useTimeTop;
+  G4bool   useIWCDFullInjectors;
   std::fstream inputFile;
   G4String vectorFileName;
   G4bool   GenerateVertexInRock;
@@ -148,8 +151,17 @@ private:
   inline void SetCollimatedTop(G4bool choice) { useColTop = choice; }
   inline G4bool IsUsingCollimatedTop()  { return useColTop; }
 
+  inline void SetSaturationBarrel(G4bool choice) { useSatBarrel = choice; }
+  inline G4bool IsUsingSaturationBarrel()  { return useSatBarrel; }
+
+  inline void SetSaturationTop(G4bool choice) { useSatTop = choice; }
+  inline G4bool IsUsingSaturationTop()  { return useSatTop; }
+
   inline void SetTimeTop(G4bool choice) { useTimeTop = choice; }
   inline G4bool IsUsingTimeTop()  { return useTimeTop; }
+
+  inline void SetIWCDFullInjectors(G4bool choice) { useIWCDFullInjectors = choice; }
+  inline G4bool IsUsingIWCDFullInjectors()  { return useIWCDFullInjectors; }
 
   inline void SetNumberCalibrationParticles(G4int choice) { c_particle = choice; }
   inline void SetCalibrationSourceHalfAngle(G4int choice) { ledtheta = choice; }

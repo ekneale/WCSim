@@ -29,6 +29,7 @@ WCSimDetectorMessenger::WCSimDetectorMessenger(WCSimDetectorConstruction* WCSimD
 			  "HyperKWithOD\n"
 			  "EggShapedHyperK\n"
 			  "EggShapedHyperK_withHPD\n"
+			 "NuPrism\n"
 			  );
   PMTConfig->SetParameterName("PMTConfig", false);
   PMTConfig->SetCandidates("SuperK "
@@ -43,6 +44,7 @@ WCSimDetectorMessenger::WCSimDetectorMessenger(WCSimDetectorConstruction* WCSimD
 			  "HyperKWithOD "
 			  "EggShapedHyperK "
 			  "EggShapedHyperK_withHPD "
+			   "NuPrism "
 			  );
   PMTConfig->AvailableForStates(G4State_PreInit, G4State_Idle);
 
@@ -263,6 +265,8 @@ void WCSimDetectorMessenger::SetNewValue(G4UIcommand* command,G4String newValue)
 		} else if ( newValue == "EggShapedHyperK_withHPD") {
 		  WCSimDetector->SetIsEggShapedHyperK(true);
 		  WCSimDetector->SetEggShapedHyperKGeometry_withHPD();
+		} else if ( newValue == "NuPrism") {
+                  WCSimDetector->SetNuPrismGeometry();
 		} else
 		  G4cout << "That geometry choice is not defined!" << G4endl;
 	}

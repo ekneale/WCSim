@@ -84,6 +84,9 @@ WCSimPrimaryGeneratorAction::WCSimPrimaryGeneratorAction(
   useColBottom = false;
   useColTop = false;
   useTimeTop = false;
+  useSatTop = false;
+  useSatBarrel = false;
+  useIWCDFullInjectors = false;
 
   particleGunBarrel = new G4ParticleGun();
   particleGunTop = new G4ParticleGun();
@@ -419,53 +422,35 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
       particleGunTop->SetNumberOfParticles(c_particle);
       particleGunBottom->SetParticleDefinition(G4OpticalPhoton::Definition());
       particleGunBottom->SetNumberOfParticles(c_particle);
-      //particleTable = FindParticle("opticalphoton")->DumpTable();
-            
-      //double maxr = 3700*cm;
-      //double maxr = 3610*cm;
-      double maxr = 3361*cm; // NEW HK GEOM
-      //double maxr = 3400*cm;
+
+      G4double energytemp = 3.0996 * eV; // 400 nm
+      double maxr = 3361*cm; // NEW HK GEOM facing out
+      //double maxr = 3451*cm; // NEW HK GEOM facing in
       double rad1 = 800*cm;
       double rad2 = 1800*cm;
       double rad3 = 2800*cm;
-      double xposb = -999*cm;
-      double yposb = -999*cm;
-      //double ledtheta = 40 * deg;
+      double xposb = -9999*cm;
+      double yposb = -9999*cm;
+      double zposb = -9999*cm;
 
-      //      for (int numpart = 0; numpart < 500; numpart++) {
-      //for (int timestep = 0; timestep < 1000; timestep++) {
+
       for(int ip = 0; ip < 5; ip++) {
-	//std::cerr << "looping through Z positions" << std::endl;
-	//double zposb = (-1815 + ip*1210)*cm;
-	//double zposb = (-1800 + ip*1200)*cm;
-	double zposb = -9999999;
 	if (ip==0) zposb = 2700*cm;
 	if (ip==1) zposb = 1350*cm;
 	if (ip==2) zposb = 0*cm;
 	if (ip==3) zposb = -1350*cm;
 	if (ip==4) zposb = -2700*cm;
-	//double zposb = 1085*cm;
-	//if (ip == 0 || ip == 2) continue;
 	for(int theta = 0; theta < 16; theta++) {
-	  //  	  if (theta % 2 != 0) continue;
-	  //MyGPS->GeneratePrimaryVertex( anEvent );
 	  if (ip == 1 || ip == 3) {
-	    xposb = maxr*(std::cos(theta*(std::acos(-1))/8));
-	    yposb = maxr*(std::sin(theta*(std::acos(-1))/8));
-	    //	      if ((ip == 1 && theta == 0) || (ip == 3 && theta == 7)) continue;
+	    xposb = maxr*(std::cos((theta+0.0)*(std::acos(-1))/8));
+	    yposb = maxr*(std::sin((theta+0.0)*(std::acos(-1))/8));
 	  }
 	  else {
 	    xposb = maxr*(std::cos((theta+0.5)*(std::acos(-1))/8));
 	    yposb = maxr*(std::sin((theta+0.5)*(std::acos(-1))/8));
-	    //if ((ip == 0 && theta == 13) || (ip == 2 && theta == 3) || (ip == 4 && theta == 11)) continue;
 	  }
-	  //	  std::cerr << "Position : " << xposb << "," << yposb << "," << zposb << std::endl;
-	  //G4ThreeVector postemp(xpos, ypos, zpos);
 	  G4ThreeVector postempb(xposb,yposb,zposb);
 	  particleGunBarrel->SetParticlePosition(postempb);
-	  //G4double energytempb = 2.505 * eV;
-	  G4double energytempb = 3.0996 * eV; // 400 nm
-	  //G4ThreeVector momtempb(-xposb, -yposb, 0);
 	  G4double rndm = G4UniformRand();
 	  G4double rndm2 = G4UniformRand();
 	  G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));
@@ -481,44 +466,39 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	  G4ThreeVector YPrime = G4ThreeVector(yposb,-xposb,0.); // Facing out
 	  //G4ThreeVector ZPrime = G4ThreeVector(-xposb,-yposb,0.); // Facing in
 	  G4ThreeVector ZPrime = G4ThreeVector(xposb,yposb,0.); // Facing out
-	  //G4double pz = 0;
 	  G4double finx = (px*XPrime.x()) + (py*YPrime.x()) + (pz*ZPrime.x());
 	  G4double finy = (px*XPrime.y()) + (py*YPrime.y()) + (pz*ZPrime.y());
 	  G4double finz = (px*XPrime.z()) + (py*YPrime.z()) + (pz*ZPrime.z());
 	  //std::cerr << "finx " << finx << ", finy " << finy << ", finz " << finz << std::endl;
-	  //G4ThreeVector momtempb(px,py,pz);
+	  G4double time = G4RandFlat::shoot(20.0,40.0);
+	  particleGunBarrel->SetParticleTime(time);
 	  G4ThreeVector momtempb(finx,finy,finz);
 	  particleGunBarrel->SetParticleMomentumDirection(momtempb);
-	  particleGunBarrel->SetParticleEnergy(energytempb);
-	  //particleGunBarrel->SetParticleTime(timestep);
-	  //G4ThreeVector targetvector(-xposb,-yposb,0);
-	  G4ThreeVector targetvector(xposb,yposb,0);
+	  particleGunBarrel->SetParticleEnergy(energytemp);
 	  particleGunBarrel->SetParticlePolarization(G4RandomDirection());
 	  particleGunBarrel->GeneratePrimaryVertex(anEvent);
 	  SetVtx(postempb);
-	  SetBeamEnergy(energytempb);
+	  SetBeamEnergy(energytemp);
 	  SetBeamDir(momtempb.unit());
 	  SetBeamPDG(0);
 	}
       }
-      //}
       for (int i = 0; i < 3; i++) {
-	//double zpos = 2990*cm; // top facing down
-	// double zpos = -3555*cm; // bottom facing down
+	//double zpos = 3650*cm; // top facing down
 	double zpos = -3460*cm; // bottom facing down
 	double xpos = 0.;
 	double ypos = 0.;
 	//G4ThreeVector postemp(0, 0, zpos);
 	if (i==0) {
 	  for (int angfrac1 = 0; angfrac1 < 3; angfrac1++) {
-	    //if (angfrac1 % 2 == 0) continue;
+	    //	    if (angfrac1 % 2 == 0) continue;
 	    double xpos = rad1*(std::cos((angfrac1*8 + 3)*(std::acos(-1)/12)));
 	    double ypos = rad1*(std::sin((angfrac1*8 + 3)*(std::acos(-1)/12)));
 	    G4ThreeVector postemp(xpos,ypos,zpos);
-	    particleGunTop->SetParticlePosition(postemp);
+	    particleGunBottom->SetParticlePosition(postemp);
 	    //particleGun->SetNumberOfParticles(5000);
 	    //	    G4double energytemp = 2.505 * eV;
-	    G4double energytemp = 3.0996 * eV; // 400 nm
+	    //G4double energytemp = 3.0996 * eV; // 400 nm
 	    G4double rndm = G4UniformRand();
 	    G4double rndm2 = G4UniformRand();
 	    G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));
@@ -531,6 +511,112 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	    G4double pz = -costheta; // Facing down
 	    //G4double pz = -1;
 	    G4ThreeVector momtemp(px,py,pz);
+	    particleGunBottom->SetParticleMomentumDirection(momtemp);
+	    particleGunBottom->SetParticleEnergy(energytemp);
+	    particleGunBottom->SetParticlePolarization(G4RandomDirection());
+	    particleGunBottom->GeneratePrimaryVertex(anEvent);
+
+	    SetVtx(postemp);
+	    SetBeamEnergy(energytemp);
+	    SetBeamDir(momtemp.unit());
+	    SetBeamPDG(0);
+	  }
+	}
+	if (i==1) {
+	  for (int angfrac2 = 0; angfrac2 < 6; angfrac2++) {
+	    //	    if (angfrac2 % 4 == 0) continue;
+	    double xpos = rad2*(std::cos((angfrac2*4 + 1)*(std::acos(-1)/12)));
+	    double ypos = rad2*(std::sin((angfrac2*4 + 1)*(std::acos(-1)/12)));
+	    G4ThreeVector postemp(xpos,ypos,zpos);
+	    particleGunBottom->SetParticlePosition(postemp);
+	    //particleGun->SetNumberOfParticles(5000);
+	    //G4double energytemp = 2.505 * eV;
+	    //G4double energytemp = 3.0996 * eV; // 400 nm
+	    G4double rndm = G4UniformRand();
+	    G4double rndm2 = G4UniformRand();
+	    G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));
+	    G4double sintheta = std::sqrt(1. - costheta*costheta);
+	    G4double phi = rndm2*2*(std::acos(-1));
+	    G4double sinphi = std::sin(phi);
+	    G4double cosphi = std::cos(phi);
+	    G4double px = sintheta*cosphi;
+	    G4double py = sintheta*sinphi;
+	    G4double pz = -costheta;
+	    //G4double pz = -1;
+	    G4ThreeVector momtemp(px,py,pz);
+	    particleGunBottom->SetParticleMomentumDirection(momtemp);
+	    particleGunBottom->SetParticleEnergy(energytemp);
+	    particleGunBottom->SetParticlePolarization(G4RandomDirection());
+	    particleGunBottom->GeneratePrimaryVertex(anEvent);
+
+	    SetVtx(postemp);
+	    SetBeamEnergy(energytemp);
+	    SetBeamDir(momtemp.unit());
+	    SetBeamPDG(0);
+	  }
+	}
+	if (i==2) {
+	  for (int angfrac3 = 0; angfrac3 < 12; angfrac3++) {
+	    //	    	      if (angfrac3 % 8 == 0) continue;
+	    double xpos = rad3*(std::cos((angfrac3)*(std::acos(-1)/6)));
+	    double ypos = rad3*(std::sin((angfrac3)*(std::acos(-1)/6)));
+	    G4ThreeVector postemp(xpos,ypos,zpos);
+	    particleGunBottom->SetParticlePosition(postemp);
+	    //particleGun->SetNumberOfParticles(5000);
+	    //G4double energytemp = 2.505 * eV;
+	    //	    G4double energytemp = 3.0996 * eV; // 400 nm
+	    G4double rndm = G4UniformRand();
+	    G4double rndm2 = G4UniformRand();
+	    G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));
+	    G4double sintheta = std::sqrt(1. - costheta*costheta);
+	    G4double phi = rndm2*2*(std::acos(-1));
+	    G4double sinphi = std::sin(phi);
+	    G4double cosphi = std::cos(phi);
+	    G4double px = sintheta*cosphi;
+	    G4double py = sintheta*sinphi;
+	    G4double pz = -costheta;
+	    //G4double pz = -1;
+	    G4ThreeVector momtemp(px,py,pz);
+	    particleGunBottom->SetParticleMomentumDirection(momtemp);
+	    particleGunBottom->SetParticleEnergy(energytemp);
+	    particleGunBottom->SetParticlePolarization(G4RandomDirection());
+	    particleGunBottom->GeneratePrimaryVertex(anEvent);
+
+	    SetVtx(postemp);
+	    SetBeamEnergy(energytemp);
+	    SetBeamDir(momtemp.unit());
+	    SetBeamPDG(0);
+	  }
+	}
+      }
+      for (int i = 0; i < 3; i++) {
+	double zpos = 3460*cm; // top facing up
+	//double zpos = 3650*cm; // top facing down
+	double xpos = 0.;
+	double ypos = 0.;
+	//G4ThreeVector postemp(0, 0, zpos);
+	if (i==0) {
+	  for (int angfrac1 = 0; angfrac1 < 3; angfrac1++) {
+	    //	    	      if (angfrac1 % 2 == 0) continue;
+	    double xpos = rad1*(std::cos((angfrac1*8 + 3)*(std::acos(-1)/12)));
+	    double ypos = rad1*(std::sin((angfrac1*8 + 3)*(std::acos(-1)/12)));
+	    G4ThreeVector postemp(xpos,ypos,zpos);
+	    particleGunTop->SetParticlePosition(postemp);
+	    //particleGun->SetNumberOfParticles(5000);
+	    //G4double energytemp = 2.505 * eV;
+	    //G4double energytemp = 3.0996 * eV; // 400 nm
+	    G4double rndm = G4UniformRand();
+	    G4double rndm2 = G4UniformRand();
+	    G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));
+	    G4double sintheta = std::sqrt(1. - costheta*costheta);
+	    G4double phi = rndm2*2*(std::acos(-1));
+	    G4double sinphi = std::sin(phi);
+	    G4double cosphi = std::cos(phi);
+	    G4double px = sintheta*cosphi;
+	    G4double py = sintheta*sinphi;
+	    G4double pz = costheta; // Facing up
+	    //G4double pz = -costheta; // Facing down
+	    G4ThreeVector momtemp(px,py,pz);
 	    particleGunTop->SetParticleMomentumDirection(momtemp);
 	    particleGunTop->SetParticleEnergy(energytemp);
 	    particleGunTop->SetParticlePolarization(G4RandomDirection());
@@ -544,14 +630,14 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	}
 	if (i==1) {
 	  for (int angfrac2 = 0; angfrac2 < 6; angfrac2++) {
-	    //if (angfrac2 % 4 == 0) continue;
-	    double xpos = rad2*(std::cos((angfrac2*4 + 1)*(std::acos(-1)/12)));
-	    double ypos = rad2*(std::sin((angfrac2*4 + 1)*(std::acos(-1)/12)));
+	    //	    	      if (angfrac2 % 4 == 0) continue;
+	    double xpos = rad2*(std::cos((4*angfrac2 + 1)*(std::acos(-1)/12)));
+	    double ypos = rad2*(std::sin((4*angfrac2 + 1)*(std::acos(-1)/12)));
 	    G4ThreeVector postemp(xpos,ypos,zpos);
 	    particleGunTop->SetParticlePosition(postemp);
 	    //particleGun->SetNumberOfParticles(5000);
 	    //G4double energytemp = 2.505 * eV;
-	    G4double energytemp = 3.0996 * eV; // 400 nm
+	    //	    G4double energytemp = 3.0996 * eV; // 400 nm
 	    G4double rndm = G4UniformRand();
 	    G4double rndm2 = G4UniformRand();
 	    G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));
@@ -561,7 +647,7 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	    G4double cosphi = std::cos(phi);
 	    G4double px = sintheta*cosphi;
 	    G4double py = sintheta*sinphi;
-	    G4double pz = -costheta;
+	    G4double pz = costheta;
 	    //G4double pz = -1;
 	    G4ThreeVector momtemp(px,py,pz);
 	    particleGunTop->SetParticleMomentumDirection(momtemp);
@@ -577,14 +663,14 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	}
 	if (i==2) {
 	  for (int angfrac3 = 0; angfrac3 < 12; angfrac3++) {
-	    //	      if (angfrac3 % 8 == 0) continue;
+	    //	    	      if (angfrac3 % 8 == 0) continue;
 	    double xpos = rad3*(std::cos((angfrac3)*(std::acos(-1)/6)));
 	    double ypos = rad3*(std::sin((angfrac3)*(std::acos(-1)/6)));
 	    G4ThreeVector postemp(xpos,ypos,zpos);
 	    particleGunTop->SetParticlePosition(postemp);
 	    //particleGun->SetNumberOfParticles(5000);
-	    //G4double energytemp = 2.505 * eV;
-	    G4double energytemp = 3.0996 * eV; // 400 nm
+	    //	    G4double energytemp = 2.505 * eV;
+	    //G4double energytemp = 3.0996 * eV; // 400 nm
 	    G4double rndm = G4UniformRand();
 	    G4double rndm2 = G4UniformRand();
 	    G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));
@@ -594,7 +680,7 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	    G4double cosphi = std::cos(phi);
 	    G4double px = sintheta*cosphi;
 	    G4double py = sintheta*sinphi;
-	    G4double pz = -costheta;
+	    G4double pz = costheta;
 	    //G4double pz = -1;
 	    G4ThreeVector momtemp(px,py,pz);
 	    particleGunTop->SetParticleMomentumDirection(momtemp);
@@ -609,114 +695,96 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	  }
 	}
       }
-      for (int i = 0; i < 3; i++) {
-	//double zpos = -2990*cm; // bottom facing up
-	//double zpos = 3555*cm; // top facing up
-	double zpos = 3460*cm; // top facing up
-	double xpos = 0.;
-	double ypos = 0.;
-	//G4ThreeVector postemp(0, 0, zpos);
-	if (i==0) {
-	  for (int angfrac1 = 0; angfrac1 < 3; angfrac1++) {
-	    //	      if (angfrac1 % 2 == 0) continue;
-	    double xpos = rad1*(std::cos((angfrac1*8 + 3)*(std::acos(-1)/12)));
-	    double ypos = rad1*(std::sin((angfrac1*8 + 3)*(std::acos(-1)/12)));
-	    G4ThreeVector postemp(xpos,ypos,zpos);
-	    particleGunBottom->SetParticlePosition(postemp);
-	    //particleGun->SetNumberOfParticles(5000);
-	    //G4double energytemp = 2.505 * eV;
-	    G4double energytemp = 3.0996 * eV; // 400 nm
-	    G4double rndm = G4UniformRand();
-	    G4double rndm2 = G4UniformRand();
-	    G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));
-	    G4double sintheta = std::sqrt(1. - costheta*costheta);
-	    G4double phi = rndm2*2*(std::acos(-1));
-	    G4double sinphi = std::sin(phi);
-	    G4double cosphi = std::cos(phi);
-	    G4double px = sintheta*cosphi;
-	    G4double py = sintheta*sinphi;
-	    G4double pz = costheta; // Facing up
-	    G4ThreeVector momtemp(px,py,pz);
-	    particleGunBottom->SetParticleMomentumDirection(momtemp);
-	    particleGunBottom->SetParticleEnergy(energytemp);
-	    particleGunBottom->SetParticlePolarization(G4RandomDirection());
-	    particleGunBottom->GeneratePrimaryVertex(anEvent);
+    } // ------------------------------ end of light array ------------------------------
 
-	    SetVtx(postemp);
-	    SetBeamEnergy(energytemp);
-	    SetBeamDir(momtemp.unit());
-	    SetBeamPDG(0);
-	  }
-	}
-	if (i==1) {
-	  for (int angfrac2 = 0; angfrac2 < 6; angfrac2++) {
-	    //	      if (angfrac2 % 4 == 0) continue;
-	    double xpos = rad2*(std::cos((4*angfrac2 + 1)*(std::acos(-1)/12)));
-	    double ypos = rad2*(std::sin((4*angfrac2 + 1)*(std::acos(-1)/12)));
-	    G4ThreeVector postemp(xpos,ypos,zpos);
-	    particleGunBottom->SetParticlePosition(postemp);
-	    //particleGun->SetNumberOfParticles(5000);
-	    //G4double energytemp = 2.505 * eV;
-	    G4double energytemp = 3.0996 * eV; // 400 nm
-	    G4double rndm = G4UniformRand();
-	    G4double rndm2 = G4UniformRand();
-	    G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));
-	    G4double sintheta = std::sqrt(1. - costheta*costheta);
-	    G4double phi = rndm2*2*(std::acos(-1));
-	    G4double sinphi = std::sin(phi);
-	    G4double cosphi = std::cos(phi);
-	    G4double px = sintheta*cosphi;
-	    G4double py = sintheta*sinphi;
-	    G4double pz = costheta;
-	    //G4double pz = -1;
-	    G4ThreeVector momtemp(px,py,pz);
-	    particleGunBottom->SetParticleMomentumDirection(momtemp);
-	    particleGunBottom->SetParticleEnergy(energytemp);
-	    particleGunBottom->SetParticlePolarization(G4RandomDirection());
-	    particleGunBottom->GeneratePrimaryVertex(anEvent);
+    if(useSatTop) {
 
-	    SetVtx(postemp);
-	    SetBeamEnergy(energytemp);
-	    SetBeamDir(momtemp.unit());
-	    SetBeamPDG(0);
-	  }
-	}
-	if (i==2) {
-	  for (int angfrac3 = 0; angfrac3 < 12; angfrac3++) {
-	    //	      if (angfrac3 % 8 == 0) continue;
-	    double xpos = rad3*(std::cos((angfrac3)*(std::acos(-1)/6)));
-	    double ypos = rad3*(std::sin((angfrac3)*(std::acos(-1)/6)));
-	    G4ThreeVector postemp(xpos,ypos,zpos);
-	    particleGunBottom->SetParticlePosition(postemp);
-	    //particleGun->SetNumberOfParticles(5000);
-	    //	    G4double energytemp = 2.505 * eV;
-	    G4double energytemp = 3.0996 * eV; // 400 nm
-	    G4double rndm = G4UniformRand();
-	    G4double rndm2 = G4UniformRand();
-	    G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));
-	    G4double sintheta = std::sqrt(1. - costheta*costheta);
-	    G4double phi = rndm2*2*(std::acos(-1));
-	    G4double sinphi = std::sin(phi);
-	    G4double cosphi = std::cos(phi);
-	    G4double px = sintheta*cosphi;
-	    G4double py = sintheta*sinphi;
-	    G4double pz = costheta;
-	    //G4double pz = -1;
-	    G4ThreeVector momtemp(px,py,pz);
-	    particleGunBottom->SetParticleMomentumDirection(momtemp);
-	    particleGunBottom->SetParticleEnergy(energytemp);
-	    particleGunBottom->SetParticlePolarization(G4RandomDirection());
-	    particleGunBottom->GeneratePrimaryVertex(anEvent);
+      particleGunTop->SetParticleDefinition(G4OpticalPhoton::Definition());
+      particleGunTop->SetNumberOfParticles(c_particle);
 
-	    SetVtx(postemp);
-	    SetBeamEnergy(energytemp);
-	    SetBeamDir(momtemp.unit());
-	    SetBeamPDG(0);
-	  }
-	}
-      } // ------------------------------ end of light array ------------------------------ 
+      G4double energytemp = 3.0996 * eV; // 400 nm
+      double rad1 = 800*cm;
+      double zpos = 3460*cm; // top facing up
+      //double zpos = 3650*cm; // top facing down
+      double xpos = rad1*(std::cos(3*(std::acos(-1)/12)));
+      double ypos = rad1*(std::sin(3*(std::acos(-1)/12)));
+      G4ThreeVector postemp(xpos,ypos,zpos);
+      particleGunTop->SetParticlePosition(postemp);
+      G4double rndm = G4UniformRand();
+      G4double rndm2 = G4UniformRand();
+      G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));
+      G4double sintheta = std::sqrt(1. - costheta*costheta);
+      G4double phi = rndm2*2*(std::acos(-1));
+      G4double sinphi = std::sin(phi);
+      G4double cosphi = std::cos(phi);
+      G4double px = sintheta*cosphi;
+      G4double py = sintheta*sinphi;
+      G4double pz = costheta; // Facing up
+      //G4double pz = -costheta; // Facing down
+      G4double time = G4RandFlat::shoot(20.0,40.0);
+      particleGunTop->SetParticleTime(time);
+      G4ThreeVector momtemp(px,py,pz);
+      std::cerr << "xpos " << xpos << ", ypos " << ypos << ", zpos " << zpos << std::endl;
+      std::cerr << "finx " << px << ", finy " << py << ", finz " << pz << std::endl;
+      particleGunTop->SetParticleMomentumDirection(momtemp);
+      particleGunTop->SetParticleEnergy(energytemp);
+      particleGunTop->SetParticlePolarization(G4RandomDirection());
+      particleGunTop->GeneratePrimaryVertex(anEvent);
 
+      SetVtx(postemp);
+      SetBeamEnergy(energytemp);
+      SetBeamDir(momtemp.unit());
+      SetBeamPDG(0);
     }
+    
+    if(useSatBarrel) {
+      
+      particleGunBarrel->SetParticleDefinition(G4OpticalPhoton::Definition());
+      particleGunBarrel->SetNumberOfParticles(c_particle);
+
+      G4double energytemp = 3.0996 * eV; // 400 nm
+      double maxr = 3361*cm; // NEW HK GEOM facing out
+      //double maxr = 3451*cm; // NEW HK GEOM facing in
+      double xposb = -9999*cm;
+      double yposb = -9999*cm;
+      double zposb = 0*cm;
+      double theta = 0;
+      xposb = maxr*(std::cos((theta+0.5)*(std::acos(-1))/8));
+      yposb = maxr*(std::sin((theta+0.5)*(std::acos(-1))/8));
+      G4ThreeVector postempb(xposb,yposb,zposb);
+      particleGunBarrel->SetParticlePosition(postempb);
+      G4double rndm = G4UniformRand();
+      G4double rndm2 = G4UniformRand();
+      G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));
+      G4double sintheta = std::sqrt(1. - costheta*costheta);
+      G4double phi = rndm2*2*(std::acos(-1));
+      G4double sinphi = std::sin(phi);
+      G4double cosphi = std::cos(phi);
+      G4double px = sintheta*cosphi;
+      G4double py = sintheta*sinphi;
+      G4double pz = costheta;
+      G4ThreeVector XPrime = G4ThreeVector(0.,0.,1.);
+      //G4ThreeVector YPrime = G4ThreeVector(-yposb,xposb,0.); // Facing in
+      G4ThreeVector YPrime = G4ThreeVector(yposb,-xposb,0.); // Facing out
+      //G4ThreeVector ZPrime = G4ThreeVector(-xposb,-yposb,0.); // Facing in
+      G4ThreeVector ZPrime = G4ThreeVector(xposb,yposb,0.); // Facing out
+      G4double finx = (px*XPrime.x()) + (py*YPrime.x()) + (pz*ZPrime.x());
+      G4double finy = (px*XPrime.y()) + (py*YPrime.y()) + (pz*ZPrime.y());
+      G4double finz = (px*XPrime.z()) + (py*YPrime.z()) + (pz*ZPrime.z());
+      //std::cerr << "finx " << finx << ", finy " << finy << ", finz " << finz << std::endl;
+      G4double time = G4RandFlat::shoot(20.0,40.0);
+      particleGunBarrel->SetParticleTime(time);
+      G4ThreeVector momtempb(finx,finy,finz);
+      particleGunBarrel->SetParticleMomentumDirection(momtempb);
+      particleGunBarrel->SetParticleEnergy(energytemp);
+      particleGunBarrel->SetParticlePolarization(G4RandomDirection());
+      particleGunBarrel->GeneratePrimaryVertex(anEvent);
+      SetVtx(postempb);
+      SetBeamEnergy(energytemp);
+      SetBeamDir(momtempb.unit());
+      SetBeamPDG(0);
+    }
+
     else if(useColBarrel) {
       //std::cerr << "Running barrel with " << c_particle << " photons and a half angle of " << ledtheta << " degrees" << std::endl;
       // ------------------------- collimated barrel --------------------
@@ -725,7 +793,6 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
       double xposb = 3361*cm;
       double yposb = 0*cm;
       double zposb = 3460*cm;
-      //double ledtheta = 2*deg;
       G4ThreeVector postemp(xposb,yposb,zposb);
       particleGunBarrel->SetParticlePosition(postemp);
       G4double energytemp = 3.0996 * eV; // 400 nm
@@ -871,7 +938,7 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	G4double py = sintheta*sinphi;
 	G4double pz = -costheta;
 	G4ThreeVector momtemp(px,py,pz);
-	particleGunTop->SetParticleTime(time);
+	//particleGunTop->SetParticleTime(time);
 	particleGunTop->SetParticleMomentumDirection(momtemp);
 	particleGunTop->SetParticleEnergy(energytemp);
 	particleGunTop->SetParticlePolarization(G4RandomDirection());
@@ -884,7 +951,210 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	SetBeamDir(momtemp.unit());
 	SetBeamPDG(0);
       }
-    }
+    } else if(useIWCDFullInjectors) {
+      //      std::cerr << "Running IWCD injectors with " << c_particle << " photons and a half angle of " << ledtheta << " degrees" << std::endl;
+      //------------------------------- Light array ------------------------     
+      particleGunBarrel->SetParticleDefinition(G4OpticalPhoton::Definition());
+      particleGunBarrel->SetNumberOfParticles(c_particle);
+      particleGunTop->SetParticleDefinition(G4OpticalPhoton::Definition());
+      particleGunTop->SetNumberOfParticles(c_particle);
+      particleGunBottom->SetParticleDefinition(G4OpticalPhoton::Definition());
+      particleGunBottom->SetNumberOfParticles(c_particle);
+      //particleTable = FindParticle("opticalphoton")->DumpTable();
+
+      double maxr = 335*cm; // IWCD GEOM
+      //double maxr = 3400*cm;
+      //double rad1 = 200*cm;
+      double rad1 = 150*cm;
+      //      double rad2 = 1800*cm;
+      //double rad3 = 2800*cm;
+      double xposb = -999*cm;
+      double yposb = -999*cm;
+      //double ledtheta = 40 * deg;
+
+      //      for (int numpart = 0; numpart < 500; numpart++) {
+      //for (int timestep = 0; timestep < 1000; timestep++) {
+      for(int ip = 0; ip < 3; ip++) {
+	//std::cerr << "looping through Z positions" << std::endl;
+	//double zposb = (-1815 + ip*1210)*cm;
+	//double zposb = (-1800 + ip*1200)*cm;
+	double zposb = -9999999;
+	if (ip==0) zposb = 250*cm;
+	if (ip==1) zposb = 0*cm;
+	if (ip==2) zposb = -250*cm;
+	//double zposb = 1085*cm;
+	//if (ip == 0 || ip == 2) continue;
+	//for(int theta = 0; theta < 6; theta++) {
+	for(int theta = 0; theta < 4; theta++) {
+	  //  	  if (theta % 2 != 0) continue;
+	  //MyGPS->GeneratePrimaryVertex( anEvent );
+	  // CPFLAG These theta offsets are there because there seems to be some
+	  // overlap in the geometry with the PMTs and injection positions without
+	  // the +0.2
+	  /*	  if (ip == 1) {
+	    xposb = maxr*(std::cos((theta+0.2)*(std::acos(-1))/3));
+	    yposb = maxr*(std::sin((theta+0.2)*(std::acos(-1))/3));
+	    //	      if ((ip == 1 && theta == 0) || (ip == 3 && theta == 7)) continue;
+	  }
+	  else {
+	    xposb = maxr*(std::cos((theta+0.7)*(std::acos(-1))/3));
+	    yposb = maxr*(std::sin((theta+0.7)*(std::acos(-1))/3));
+	    //if ((ip == 0 && theta == 13) || (ip == 2 && theta == 3) || (ip == 4 && theta == 11)) continue;
+	    }*/
+	  if (ip == 1) {
+	    xposb = maxr*(std::cos((theta+0.2)*(std::acos(-1))/2));
+	    yposb = maxr*(std::sin((theta+0.2)*(std::acos(-1))/2));
+	    //	      if ((ip == 1 && theta == 0) || (ip == 3 && theta == 7)) continue;
+	  }
+	  else {
+	    xposb = maxr*(std::cos((theta+0.7)*(std::acos(-1))/2));
+	    yposb = maxr*(std::sin((theta+0.7)*(std::acos(-1))/2));
+	    //if ((ip == 0 && theta == 13) || (ip == 2 && theta == 3) || (ip == 4 && theta == 11)) continue;
+	  }
+
+	  //	  std::cerr << "Position : " << xposb << "," << yposb << "," << zposb << std::endl;
+	  //G4ThreeVector postemp(xpos, ypos, zpos);
+	  G4ThreeVector postempb(xposb,yposb,zposb);
+	  particleGunBarrel->SetParticlePosition(postempb);
+	  //G4double energytempb = 2.505 * eV;
+	  G4double energytempb = 3.0996 * eV; // 400 nm
+	  //G4ThreeVector momtempb(-xposb, -yposb, 0);
+	  G4double rndm = G4UniformRand();
+	  G4double rndm2 = G4UniformRand();
+	  G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));
+	  G4double sintheta = std::sqrt(1. - costheta*costheta);
+	  G4double phi = rndm2*2*(std::acos(-1));
+	  G4double sinphi = std::sin(phi);
+	  G4double cosphi = std::cos(phi);
+	  G4double px = sintheta*cosphi;
+	  G4double py = sintheta*sinphi;
+	  G4double pz = costheta;
+	  G4ThreeVector XPrime = G4ThreeVector(0.,0.,1.);
+	  //G4ThreeVector YPrime = G4ThreeVector(-yposb,xposb,0.); // Facing in
+	  G4ThreeVector YPrime = G4ThreeVector(yposb,-xposb,0.); // Facing out
+	  //G4ThreeVector ZPrime = G4ThreeVector(-xposb,-yposb,0.); // Facing in
+	  G4ThreeVector ZPrime = G4ThreeVector(xposb,yposb,0.); // Facing out
+	  //G4double pz = 0;
+	  G4double finx = (px*XPrime.x()) + (py*YPrime.x()) + (pz*ZPrime.x());
+	  G4double finy = (px*XPrime.y()) + (py*YPrime.y()) + (pz*ZPrime.y());
+	  G4double finz = (px*XPrime.z()) + (py*YPrime.z()) + (pz*ZPrime.z());
+	  //std::cerr << "finx " << finx << ", finy " << finy << ", finz " << finz << std::endl;
+	  //G4ThreeVector momtempb(px,py,pz);
+	  G4ThreeVector momtempb(finx,finy,finz);
+	  particleGunBarrel->SetParticleMomentumDirection(momtempb);
+	  particleGunBarrel->SetParticleEnergy(energytempb);
+	  //particleGunBarrel->SetParticleTime(timestep);
+	  //G4ThreeVector targetvector(-xposb,-yposb,0);
+	  G4ThreeVector targetvector(xposb,yposb,0);
+	  particleGunBarrel->SetParticlePolarization(G4RandomDirection());
+	  particleGunBarrel->GeneratePrimaryVertex(anEvent);
+	  SetVtx(postempb);
+	  SetBeamEnergy(energytempb);
+	  SetBeamDir(momtempb.unit());
+	  SetBeamPDG(0);
+	}
+      }
+      //}
+      for (int i = 0; i < 3; i++) {
+	//double zpos = 2990*cm; // top facing down
+	// double zpos = -3555*cm; // bottom facing down
+	double zpos = -435*cm; // bottom facing down
+	double xpos = 0.;
+	double ypos = 0.;
+	//G4ThreeVector postemp(0, 0, zpos);
+	if (i==0) {
+	  //	  for (int angfrac1 = 0; angfrac1 < 4; angfrac1++) {
+	  for (int angfrac1 = 0; angfrac1 < 2; angfrac1++) {
+	    //if (angfrac1 % 2 == 0) continue;
+	    //	    double xpos = rad1*(std::cos((angfrac1)*(std::acos(-1)/2)));
+	    //double ypos = rad1*(std::sin((angfrac1)*(std::acos(-1)/2)));
+	    double xpos = rad1*(std::cos((angfrac1)*(std::acos(-1))));
+	    double ypos = rad1*(std::sin((angfrac1)*(std::acos(-1))));
+	    G4ThreeVector postemp(xpos,ypos,zpos);
+	    particleGunTop->SetParticlePosition(postemp);
+	    //particleGun->SetNumberOfParticles(5000);
+	    //	    G4double energytemp = 2.505 * eV;
+	    G4double energytemp = 3.0996 * eV; // 400 nm
+	    G4double rndm = G4UniformRand();
+	    G4double rndm2 = G4UniformRand();
+	    G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));
+	    G4double sintheta = std::sqrt(1. - costheta*costheta);
+	    G4double phi = rndm2*2*(std::acos(-1));
+	    G4double sinphi = std::sin(phi);
+	    G4double cosphi = std::cos(phi);
+	    G4double px = sintheta*cosphi;
+	    G4double py = sintheta*sinphi;
+	    G4double pz = -costheta; // Facing down
+	    //G4double pz = -1;
+	    G4ThreeVector momtemp(px,py,pz);
+	    particleGunTop->SetParticleMomentumDirection(momtemp);
+	    particleGunTop->SetParticleEnergy(energytemp);
+	    particleGunTop->SetParticlePolarization(G4RandomDirection());
+	    particleGunTop->GeneratePrimaryVertex(anEvent);
+
+	    SetVtx(postemp);
+	    SetBeamEnergy(energytemp);
+	    SetBeamDir(momtemp.unit());
+	    SetBeamPDG(0);
+	  }
+	}
+	if (i==1) {
+	  continue;
+	}
+	if (i==2) {
+	  continue;
+	}
+      }
+      for (int i = 0; i < 3; i++) {
+	//double zpos = -2990*cm; // bottom facing up
+	//double zpos = 3555*cm; // top facing up
+	double zpos = 435*cm; // top facing up
+	double xpos = 0.;
+	double ypos = 0.;
+	//G4ThreeVector postemp(0, 0, zpos);
+	if (i==0) {
+	  //for (int angfrac1 = 0; angfrac1 < 4; angfrac1++) {
+	  for (int angfrac1 = 0; angfrac1 < 2; angfrac1++) {
+	    //if (angfrac1 % 2 == 0) continue;
+	    //	    double xpos = rad1*(std::cos((angfrac1)*(std::acos(-1)/2)));
+	    //double ypos = rad1*(std::sin((angfrac1)*(std::acos(-1)/2)));
+	    double xpos = rad1*(std::cos((angfrac1)*(std::acos(-1))));
+	    double ypos = rad1*(std::sin((angfrac1)*(std::acos(-1))));
+	    G4ThreeVector postemp(xpos,ypos,zpos);
+	    particleGunBottom->SetParticlePosition(postemp);
+	    //particleGun->SetNumberOfParticles(5000);
+	    //G4double energytemp = 2.505 * eV;
+	    G4double energytemp = 3.0996 * eV; // 400 nm
+	    G4double rndm = G4UniformRand();
+	    G4double rndm2 = G4UniformRand();
+	    G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));
+	    G4double sintheta = std::sqrt(1. - costheta*costheta);
+	    G4double phi = rndm2*2*(std::acos(-1));
+	    G4double sinphi = std::sin(phi);
+	    G4double cosphi = std::cos(phi);
+	    G4double px = sintheta*cosphi;
+	    G4double py = sintheta*sinphi;
+	    G4double pz = costheta; // Facing up
+	    G4ThreeVector momtemp(px,py,pz);
+	    particleGunBottom->SetParticleMomentumDirection(momtemp);
+	    particleGunBottom->SetParticleEnergy(energytemp);
+	    particleGunBottom->SetParticlePolarization(G4RandomDirection());
+	    particleGunBottom->GeneratePrimaryVertex(anEvent);
+
+	    SetVtx(postemp);
+	    SetBeamEnergy(energytemp);
+	    SetBeamDir(momtemp.unit());
+	    SetBeamPDG(0);
+	  }
+	}
+	if (i==1) {
+	  continue;
+	}
+	if (i==2) {
+	  continue;
+	}
+      }
+    } // ------------------------------ end of IWCD light array ------------------------------ 
   }
 }
 

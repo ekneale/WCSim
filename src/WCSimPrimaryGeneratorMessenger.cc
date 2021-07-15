@@ -38,10 +38,10 @@ WCSimPrimaryGeneratorMessenger::WCSimPrimaryGeneratorMessenger(WCSimPrimaryGener
     //C. Pidcott: Addition of calibration settings
   calibrationSource = new G4UIcmdWithAString("/mygen/calibrationsource",this);
   calibrationSource->SetGuidance("Select optical calibration source.");
-  calibrationSource->SetGuidance(" Available sources : fullInjectors, colBarrel, colBottom, colTop, timeTop");
+  calibrationSource->SetGuidance(" Available sources : fullInjectors, colBarrel, colBottom, colTop, satBarrel, satTop, timeTop, IWCDfullInjectors");
   calibrationSource->SetParameterName("calSource",true);
   calibrationSource->SetDefaultValue("fullInjectors");
-  calibrationSource->SetCandidates("fullInjectors colBarrel colBottom colTop timeTop");
+  calibrationSource->SetCandidates("fullInjectors colBarrel colBottom satBarrel satTop colTop timeTop IWCDfullInjectors");
 
   calSourceNumParticles = new G4UIcmdWithAnInteger("/WCSim/calibrationsource/NumCalibParticles", this);
   calSourceNumParticles->SetGuidance("Set number of photons emitted per calibration source per event");
@@ -132,6 +132,10 @@ if( command==calibrationSource )
       myAction->SetCollimatedBarrel(false);
       myAction->SetCollimatedBottom(false);
       myAction->SetCollimatedTop(false);
+      myAction->SetSaturationBarrel(false);
+      myAction->SetSaturationTop(false);
+      myAction->SetTimeTop(false);
+      myAction->SetIWCDFullInjectors(false);
     }
     else if ( newValue == "colBarrel")
       {
@@ -139,6 +143,10 @@ if( command==calibrationSource )
 	myAction->SetCollimatedBarrel(true);
 	myAction->SetCollimatedBottom(false);
 	myAction->SetCollimatedTop(false);
+	myAction->SetSaturationBarrel(false);
+        myAction->SetSaturationTop(false);
+	myAction->SetTimeTop(false);
+	myAction->SetIWCDFullInjectors(false);
       }
     else if ( newValue == "colBottom")
       {
@@ -146,6 +154,10 @@ if( command==calibrationSource )
 	myAction->SetCollimatedBarrel(false);
 	myAction->SetCollimatedBottom(true);
 	myAction->SetCollimatedTop(false);
+	myAction->SetSaturationBarrel(false);
+        myAction->SetSaturationTop(false);
+        myAction->SetTimeTop(false);
+	myAction->SetIWCDFullInjectors(false);
       }
     else if ( newValue == "colTop")
       {
@@ -153,6 +165,32 @@ if( command==calibrationSource )
 	myAction->SetCollimatedBarrel(false);
 	myAction->SetCollimatedBottom(false);
 	myAction->SetCollimatedTop(true);
+	myAction->SetSaturationBarrel(false);
+        myAction->SetSaturationTop(false);
+	myAction->SetTimeTop(false);
+	myAction->SetIWCDFullInjectors(false);
+      }
+    else if ( newValue == "satTop")
+      {
+	myAction->SetFullInjectors(false);
+	myAction->SetCollimatedBarrel(false);
+	myAction->SetCollimatedBottom(false);
+	myAction->SetCollimatedTop(false);
+	myAction->SetSaturationBarrel(false);
+        myAction->SetSaturationTop(true);
+	myAction->SetTimeTop(false);
+	myAction->SetIWCDFullInjectors(false);
+      }
+    else if ( newValue == "satBarrel")
+      {
+	myAction->SetFullInjectors(false);
+	myAction->SetCollimatedBarrel(false);
+	myAction->SetCollimatedBottom(false);
+	myAction->SetCollimatedTop(false);
+	myAction->SetSaturationBarrel(true);
+        myAction->SetSaturationTop(false);
+	myAction->SetTimeTop(false);
+	myAction->SetIWCDFullInjectors(false);
       }
     else if ( newValue == "timeTop")
       {
@@ -160,8 +198,22 @@ if( command==calibrationSource )
 	myAction->SetCollimatedBarrel(false);
 	myAction->SetCollimatedBottom(false);
 	myAction->SetCollimatedTop(false);
+	myAction->SetSaturationBarrel(false);
+        myAction->SetSaturationTop(false);
 	myAction->SetTimeTop(true);
+	myAction->SetIWCDFullInjectors(false);
       }
+    else if (newValue == "IWCDfullInjectors")
+    {
+      myAction->SetFullInjectors(false);
+      myAction->SetCollimatedBarrel(false);
+      myAction->SetCollimatedBottom(false);
+      myAction->SetCollimatedTop(false);
+      myAction->SetSaturationBarrel(false);
+      myAction->SetSaturationTop(false);
+      myAction->SetTimeTop(false);
+      myAction->SetIWCDFullInjectors(true);
+    }
 
   }
 
@@ -207,8 +259,14 @@ G4String WCSimPrimaryGeneratorMessenger::GetCurrentValue(G4UIcommand* command)
       { cv = "colBottom"; }
     else if(myAction->IsUsingCollimatedTop())
       { cv = "colTop"; }
+    else if(myAction->IsUsingSaturationBarrel())
+      { cv = "satBarrel"; }
+    else if(myAction->IsUsingSaturationTop())
+      { cv = "satTop"; }
     else if(myAction->IsUsingTimeTop())
       { cv = "timeTop"; }
+    else if(myAction->IsUsingIWCDFullInjectors())
+      { cv = "IWCDfullInjectors"; }
   }
   
   return cv;
