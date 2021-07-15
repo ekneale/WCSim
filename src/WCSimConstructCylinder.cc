@@ -152,6 +152,8 @@ G4LogicalVolume* WCSimDetectorConstruction::ConstructCylinder()
 				     .5*WCLength,  //jl145 - per blueprint
 				     0.*deg,
 				     360.*deg);
+
+  //  std::clog << " qqqqqqqqqqqqqqqqqqqq " << " WCRadius " << WCRadius << " WCBarrel radius " << WCRadius+1.*m << " half height "  << .5*WCLength << std::endl;
   
   G4LogicalVolume* logicWCBarrel = 
     new G4LogicalVolume(solidWCBarrel,
@@ -186,22 +188,22 @@ G4LogicalVolume* WCSimDetectorConstruction::ConstructCylinder()
                             "CaveTyvek",
                             0, 0, 0);
 
-    G4VisAttributes *showTyvekCave = new G4VisAttributes(green);
-    showTyvekCave->SetForceWireframe(true);// This line is used to give definition to the rings in OGLSX Visualizer
-    logicCaveTyvek->SetVisAttributes(showTyvekCave);
-    //logicCaveTyvek->SetVisAttributes(G4VisAttributes::Invisible);
-
-
     G4VPhysicalVolume *physiCaveTyvek =
         new G4PVPlacement(0,
                           G4ThreeVector(0., 0., 0.),
                           logicCaveTyvek,
-                          "CaveBarrelTyvek",
-                          logicWCBarrel,
-                          false,
+						  "CaveBarrelTyvek",
+						  logicWCBarrel,
+						  false,
                           0);
 
     G4LogicalSkinSurface *TyvekCaveBarrelSurface = new G4LogicalSkinSurface("TyvekCaveBarrelSurface", logicCaveTyvek, OpWaterTySurface);
+
+    G4VisAttributes *showTyvekCave = new G4VisAttributes(green);
+    showTyvekCave->SetForceWireframe(true);// This line is used to give definition to the rings in OGLSX Visualizer
+    logicCaveTyvek->SetVisAttributes(showTyvekCave);
+    //logicCaveTyvek->SetVisAttributes(G4VisAttributes::Invisible); //amb79
+
     //-----------------------------------------------------
     // Cylinder caps' tyvek
     //-----------------------------------------------------
@@ -213,36 +215,42 @@ G4LogicalVolume* WCSimDetectorConstruction::ConstructCylinder()
                                             0. * deg,
                                             360. * deg);
 
-    G4ThreeVector CaveTyvekPosition(0., 0., WCLength / 2);
-
     G4LogicalVolume *logicCaveCapsTyvek =
-         new G4LogicalVolume(solidCaveCapsTyvek,
-                             G4Material::GetMaterial("Tyvek"),
-                             "CaveCapTyvek",
-                             0, 0, 0);
+			new G4LogicalVolume(solidCaveCapsTyvek,
+								G4Material::GetMaterial("Tyvek"),
+								"CaveCapTyvek",
+								0, 0, 0);
 
     G4LogicalSkinSurface *TyvekCaveTopSurface = new G4LogicalSkinSurface("TyvekCaveTopSurface", logicCaveCapsTyvek, OpWaterTySurface);
 
+    G4VisAttributes *CapsCaveTyvekVisAtt = new G4VisAttributes(yellow);
+    CapsCaveTyvekVisAtt->SetForceWireframe(true);
+    logicCaveCapsTyvek->SetVisAttributes(CapsCaveTyvekVisAtt);
+    //logicCaveCapsTyvek->SetVisAttributes(G4VisAttributes::Invisible); //amb79
+
+    G4ThreeVector CaveTyvekPosition(0., 0., WCLength / 2);
 
     G4VPhysicalVolume *physiTopCaveTyvek =
         new G4PVPlacement(0,
                           CaveTyvekPosition,
-                          logicCaveCapsTyvek,
+						  logicCaveCapsTyvek,
                           "CaveTopTyvek",
-                          logicWCBarrel,
+						  logicWCBarrel,
                           false,
                           0);
+
 
     CaveTyvekPosition.setZ(-CaveTyvekPosition.getZ());
 
     G4VPhysicalVolume *physiBottomCaveTyvek =
         new G4PVPlacement(0,
                           CaveTyvekPosition,
-                          logicCaveCapsTyvek,
+						  logicCaveCapsTyvek,
                           "CaveBottomTyvek",
-                          logicWCBarrel,
+						  logicWCBarrel,
                           false,
                           0);
+
 
   } // END Tyvek cave
   //-----------------------------------------------------
@@ -969,7 +977,6 @@ If used here, uncomment the SetVisAttributes(WClogic) line, and comment out the 
                           logicWCBarrelCell,
                           false,
                           0,true);
-
     G4LogicalSkinSurface *WaterTySurfaceSide =
         new G4LogicalSkinSurface("WaterTySurfaceSide", logicWCBarrelCellODTyvek, OpWaterTySurface);
 
@@ -991,18 +998,28 @@ If used here, uncomment the SetVisAttributes(WClogic) line, and comment out the 
     // COMPUTE OD COVERAGE //
     // ------------------- //
     G4double AreaRingOD = WCBarrelRingNPhi * barrelODCellWidth * barrelODCellHeight;
+    G4double AreaCellOD = barrelODCellWidth * barrelODCellHeight;
     G4double AreaPMTOD = 3.1415*std::pow(WCPMTODRadius,2);
     G4double NPMTODCovered = (AreaRingOD/AreaPMTOD) * WCPMTODPercentCoverage/100.;
+    G4double NPMTODByCellFull = NPMTODCovered/WCBarrelRingNPhi; // NPMT required par cell to achieve ODPercentOverage
     G4double NPMTODByCell = round(NPMTODCovered/WCBarrelRingNPhi); // NPMT required par cell to achieve ODPercentOverage
-
+    G4double RealODCoverage = NPMTODByCell*AreaPMTOD/AreaCellOD;
     // ------ DEBUG ------ //
     G4cout << G4endl;
     G4cout << "AreaRingOD : " << AreaRingOD/m2 << " (m2)" << G4endl;
+    G4cout << "AreaCellOD : " << AreaCellOD/m2 << " (m2)" << G4endl;
     G4cout << "AreaPMTOD : " << AreaPMTOD/m2 << " (m2)" << G4endl;
     G4cout << "--> NbPMTODCovered : " << NPMTODCovered << G4endl;
+    G4cout << "--> NbPMTODByCellFull : " << NPMTODByCellFull << G4endl;
     G4cout << "--> NbPMTODByCell : " << NPMTODByCell << G4endl;
+    G4cout << "--> SuggestedODCoverage : " <<  WCPMTODPercentCoverage/100. << G4endl;
+    G4cout << "--> RealODCoverage : " << RealODCoverage << G4endl;
     G4cout << G4endl;
     // ------------------- //
+    // The number of PMTs per cell gives a slightly different coverage so the photocoverage
+    // parameter must be changed here so the endcaps will have the same photocoverage as the barrel.
+    WCPMTODPercentCoverage = RealODCoverage*100;
+    WCODCapPMTSpacing  = (pi*WCIDDiameter/(round(WCIDDiameter*sqrt(pi*WCPMTODPercentCoverage)/(10.0*WCPMTODRadius))));
 
     if((G4int)WCPMTODperCellHorizontal == 0 && (G4int)WCPMTODperCellVertical == 0){
       ComputeWCODPMT((G4int)NPMTODByCell,&WCPMTODperCellHorizontal,&WCPMTODperCellVertical);
@@ -1015,10 +1032,12 @@ If used here, uncomment the SetVisAttributes(WClogic) line, and comment out the 
 
     for(G4double i = 0; i < WCPMTODperCellHorizontal; i++){
       for(G4double j = 0; j < WCPMTODperCellVertical; j++){
-        G4ThreeVector Container =  G4ThreeVector(WCODRadius+sphereRadius/2,
+        G4ThreeVector Container =  G4ThreeVector(WCODRadius,
                                                  -barrelODCellWidth/2.+(i+0.5)*horizontalODSpacing+((G4int)(std::pow(-1,j))*(G4int)(WCODPMTShift)/2),
                                                  -(barrelCellHeight * (barrelODCellWidth/barrelCellWidth))/2.+(j+0.5)*verticalODSpacing);
 
+		//		std::cout << " qqqqqqqqqqqqqqqqqqqqqqqq barrel i " << i << " of " << WCPMTODperCellHorizontal << " j " << j << " of " << WCPMTODperCellVertical << " Container (" << Container.x() << ", " << Container.y()
+		//				  << ", " << Container.z() << ") " << std::endl;
 
         G4VPhysicalVolume* physiWCBarrelWLSPlate =
             new G4PVPlacement(WCPMTODRotation,           // its rotation
@@ -1098,7 +1117,7 @@ If used here, uncomment the SetVisAttributes(WClogic) line, and comment out the 
 
       for(G4double i = 0; i < (WCPMTODperCellHorizontalExtra); i++){
         for(G4double j = 0; j < WCPMTODperCellVertical; j++){
-			G4ThreeVector Container =  G4ThreeVector((WCODRadius+sphereRadius/2)/cos(dPhi/2.)*cos((2.*pi-totalAngle)/2.),
+			G4ThreeVector Container =  G4ThreeVector((WCODRadius)/cos(dPhi/2.)*cos((2.*pi-totalAngle)/2.),
 													 -towerWidthOD/2.+(i+0.5)*horizontalODSpacing,
 													 -(barrelCellHeight * (WCODRadius/WCIDRadius))/2.+(j+0.5)*verticalODSpacing);
 
@@ -1142,7 +1161,7 @@ If used here, uncomment the SetVisAttributes(WClogic) line, and comment out the 
 
         G4ThreeVector topWLSpos = G4ThreeVector(xoffset,
                                                 yoffset,
-                                                ((WCIDHeight + 2*WCODDeadSpace)/2)+WCODTyvekSheetThickness+sphereRadius/2);
+                                                ((WCIDHeight + 2*WCODDeadSpace)/2)+WCODTyvekSheetThickness);
 
         G4ThreeVector bottomWLSpos = G4ThreeVector(xoffset,
                                                    yoffset,
@@ -1150,6 +1169,9 @@ If used here, uncomment the SetVisAttributes(WClogic) line, and comment out the 
 
         if (((sqrt(xoffset*xoffset + yoffset*yoffset) + WCPMTODRadius) < WCODCapEdgeLimit) ) {
 
+
+		  //		  std::cout << " qqqqqqqqqqqqqqqqqqqqqqqq cap i " << i << " of " << CapNCell << " j " << j << " of " << CapNCell << " Container (" << topWLSpos.x() << ", " << topWLSpos.y()
+		  //				  << ", " << topWLSpos.z() << ") " << std::endl;
 
 			G4VPhysicalVolume* physiTopCapWLSPlate =
 					new G4PVPlacement(0,                   // its rotation
@@ -1775,7 +1797,7 @@ G4LogicalVolume* WCSimDetectorConstruction::ConstructCaps(G4int zflip)
 
     for(G4double i = 0; i < WCPMTODperCellHorizontal; i++){
       for(G4double j = 0; j < WCPMTODperCellVertical; j++){
-        G4ThreeVector Container =  G4ThreeVector(WCODRadius+sphereRadius/2,
+        G4ThreeVector Container =  G4ThreeVector(WCODRadius,
                                                  -barrelODCellWidth/2.+(i+0.5)*horizontalODSpacing+((G4int)(std::pow(-1,j))*(G4int)(WCODPMTShift)/2),
                                                  -(barrelCellHeight * (barrelODCellWidth/barrelCellWidth))/2.+(j+0.5)*verticalODSpacing);
 
@@ -1823,7 +1845,7 @@ G4LogicalVolume* WCSimDetectorConstruction::ConstructCaps(G4int zflip)
 
       for(G4double i = 0; i < (WCPMTODperCellHorizontalExtra); i++){
         for(G4double j = 0; j < WCPMTODperCellVertical; j++){
-          G4ThreeVector Container =  G4ThreeVector((WCODRadius+sphereRadius/2)/cos(dPhi/2.)*cos((2.*pi-totalAngle)/2.),
+          G4ThreeVector Container =  G4ThreeVector((WCODRadius)/cos(dPhi/2.)*cos((2.*pi-totalAngle)/2.),
 													 -towerWidthOD/2.+(i+0.5)*horizontalODSpacing,
 													 -(barrelCellHeight * (WCODRadius/WCIDRadius))/2.+(j+0.5)*verticalODSpacing);
           Container.rotateZ(-(2*pi-totalAngle)/2.); // align with the symmetry

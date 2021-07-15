@@ -23,8 +23,13 @@
 std::map<int, G4Transform3D> WCSimDetectorConstruction::tubeIDMap;
 std::map<int, G4Transform3D> WCSimDetectorConstruction::ODtubeIDMap;
 //std::map<int, cyl_location>  WCSimDetectorConstruction::tubeCylLocation;
-hash_map<std::string, int, hash<std::string> > WCSimDetectorConstruction::tubeLocationMap;
-hash_map<std::string, int, hash<std::string> > WCSimDetectorConstruction::ODtubeLocationMap;
+
+// std::hash is default hash function actually (http://en.cppreference.com/w/cpp/utility/hash)
+// with operator() already properly defined.
+std::unordered_map<std::string, int, std::hash<std::string> >
+  WCSimDetectorConstruction::tubeLocationMap;
+std::unordered_map<std::string, int, std::hash<std::string> >
+  WCSimDetectorConstruction::ODtubeLocationMap;
 
 WCSimDetectorConstruction::WCSimDetectorConstruction(G4int DetConfig,WCSimTuningParameters* WCSimTuningPars):WCSimTuningParams(WCSimTuningPars)
 {
@@ -291,6 +296,7 @@ void WCSimDetectorConstruction::SaveOptionsToOutput(WCSimRootOptions * wcopt)
   wcopt->SetSavePi0(pi0Info_isSaved);
   wcopt->SetPMTQEMethod(PMT_QE_Method);
   wcopt->SetPMTCollEff(PMT_Coll_Eff);
+  wcopt->SetGeomHasOD(isODConstructed);
 }
 
 //A function to recalculate the dimensions of the HKOD tank if the parameters are changed
@@ -300,7 +306,12 @@ void WCSimDetectorConstruction::UpdateODGeo()
   WCODDiameter = WCIDDiameter + 2*(WCBlackSheetThickness+WCODDeadSpace+WCODTyvekSheetThickness+WCODWLSPlatesThickness);
 
   WCODCapPMTSpacing  = (pi*WCIDDiameter/(round(WCIDDiameter*sqrt(pi*WCPMTODPercentCoverage)/(10.0*WCPMTODRadius))));
-  WCODCapEdgeLimit = WCIDDiameter/2.0 - WCPMTODRadius;
+  WCODCapEdgeLimit = std::min(WCIDDiameter/2.0 - WCPMTODRadius, WCIDDiameter/2.0 - WCODWLSPlatesLength/2);
+
+  std::vector<G4String> WCColName;
+  WCColName.push_back(WCIDCollectionName);
+  WCColName.push_back(WCODCollectionName);
+  CreateCombinedPMTQE(WCColName);
 }
 
 void WCSimDetectorConstruction::CreateCombinedPMTQE(std::vector<G4String> CollectionName){
@@ -313,22 +324,23 @@ void WCSimDetectorConstruction::CreateCombinedPMTQE(std::vector<G4String> Collec
 
   // Define relevant variable
   // Create array of maps for CollectionName
-  std::vector< std::map<G4float,G4float> > QEMap;
-  std::vector<G4float> maxQEVec;
+  std::vector< std::map<G4double,G4double> > QEMap;
+  std::vector<G4double> maxQEVec;
   // Need size of QE array
   std::vector<G4int> NbOfWLBins;
 
   // Recover QE for collection name
   std::vector<WCSimPMTObject*> PMT;
+  // F. Nova: here get values from BoxandLine20inchHQE and from PMT8inch
   for(unsigned int iPMT=0;iPMT<CollectionName.size();iPMT++){
     // Access PMT pointer
     PMT.push_back(GetPMTPointer(CollectionName[iPMT]));
 
     // Recover WL and QE infos
-    G4float *wavelength = (PMT[iPMT]->GetQEWavelength());
-    G4float *QE = (PMT[iPMT]->GetQE());
+    G4double *wavelength = (PMT[iPMT]->GetQEWavelength());
+    G4double *QE = (PMT[iPMT]->GetQE());
 
-    std::map<G4float,G4float> hist;
+    std::map<G4double,G4double> hist;
     G4cout << G4endl;
     G4cout << "### Recover PMT collection name "
            << CollectionName[iPMT] << G4endl;
@@ -343,23 +355,28 @@ void WCSimDetectorConstruction::CreateCombinedPMTQE(std::vector<G4String> Collec
   }
 
   // Concatenate WL vec and remove duplicate
-  std::map<G4float,G4float> QE;
+  std::map<G4double,G4double> QE;
 
   // Recursive algorithm to set new QE for combined PMT collection
+  // F. Nova: define QE for a given wavelength as sqrt(QE1^2 + QE2^2 + ...), where each QEi is the value of QE for PMT type i
+  // replace it with maximum
+  G4double max_QE = 0.;
   G4cout << G4endl;
   for(unsigned int iCol=0; iCol<QEMap.size();iCol++){
-    for(std::map<G4float, G4float>::iterator it=QEMap[iCol].begin(); it!=QEMap[iCol].end(); ++it){
+    for(std::map<G4double, G4double>::iterator it=QEMap[iCol].begin(); it!=QEMap[iCol].end(); ++it){
       if(iCol+1<QEMap.size()){
-        std::map<G4float, G4float>::iterator foundWL = QEMap[iCol+1].find(it->first);
+        std::map<G4double, G4double>::iterator foundWL = QEMap[iCol+1].find(it->first);
         if(foundWL == QEMap[iCol+1].end()){
           G4cout << "Undefined QE in next collection" << G4endl;
           G4cout << "Will add it" << G4endl;
           G4cout << " ### " << it->first << "nm : " << it->second << G4endl;
           QE[it->first]=it->second;
         } else {
+
+	        max_QE = std::max(it->second, foundWL->second);
           G4cout << "New QE defined for " << it->first << "nm is "
-                 << sqrt(it->second*it->second + foundWL->second*foundWL->second) << G4endl;
-          QE[it->first]=sqrt(it->second*it->second + foundWL->second*foundWL->second);
+                 << max_QE << G4endl;
+          QE[it->first]=max_QE;
         }
       } else {
         break;
@@ -372,8 +389,8 @@ void WCSimDetectorConstruction::CreateCombinedPMTQE(std::vector<G4String> Collec
   // Need to make a special case for the last collection
   int iCol = QEMap.size()-1;
   if(iCol>0) {
-    for (std::map<G4float, G4float>::iterator it = QEMap[iCol].begin(); it != QEMap[iCol].end(); ++it) {
-      std::map<G4float, G4float>::iterator foundWL = QEMap[iCol - 1].find(it->first);
+    for (std::map<G4double, G4double>::iterator it = QEMap[iCol].begin(); it != QEMap[iCol].end(); ++it) {
+      std::map<G4double, G4double>::iterator foundWL = QEMap[iCol - 1].find(it->first);
       if (foundWL == QEMap[iCol - 1].end()) {
         G4cout << G4endl;
         G4cout << "Special case for last collection" << G4endl;
@@ -385,7 +402,7 @@ void WCSimDetectorConstruction::CreateCombinedPMTQE(std::vector<G4String> Collec
   G4cout << G4endl;
 
   // Let's debug this one last time :
-  std::map<G4float, G4float>::iterator itr;
+  std::map<G4double, G4double>::iterator itr;
   for(itr = QE.begin(); itr != QE.end(); itr++){
     G4cout << " ### " << itr->first << "nm : " << itr->second << G4endl;
   }
