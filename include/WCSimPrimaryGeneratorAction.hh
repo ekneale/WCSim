@@ -149,6 +149,10 @@ private:
   G4int c_particle;
   G4double ledtheta;
 
+  // OD Detector radius and height
+  double OD_inner_radius;
+  double OD_inner_height;
+
  public:
 
   inline void SetMulineEvtGenerator(G4bool choice) { useMulineEvt = choice; }

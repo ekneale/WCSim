@@ -115,6 +115,10 @@ WCSimPrimaryGeneratorAction::WCSimPrimaryGeneratorAction(
   particleGunTop = new G4ParticleGun();
   particleGunBottom = new G4ParticleGun();
 
+  // OD Detector radius and height
+  OD_inner_radius = myDC->GetIDRadius() + 60*cm + 2*cm + 1*mm; // does not include plate or PMT exposure
+  OD_inner_height = myDC->GetWCIDHeight() + 2*(60*cm + 2*cm + 1*mm); // does not include plate or PMT exposure
+
 // Create the relevant histograms to generate muons
   // according to SuperK flux extrapolated at HyperK site
   altCosmics = 2*myDC->GetWCIDHeight();
@@ -511,7 +515,13 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
       particleGunBottom->SetNumberOfParticles(c_particle);
 
       G4double energytemp = 3.0996 * eV; // 400 nm
-      double maxr = 3361*cm; // NEW HK GEOM facing out
+      //G4double energytemp = 3.3509 * eV; // 370 nm
+      //double maxr = 3312.01*cm;
+      double maxr = 3317.01*cm;
+      //double maxr = OD_inner_radius + 10*cm; // facing out
+      //double maxr = OD_inner_radius + 95*cm; // facing in
+      //double maxr = 3320*cm; // NEW NEW HK GEOM facing out
+      //double maxr = 3361*cm; // NEW HK GEOM facing out
       //double maxr = 3451*cm; // NEW HK GEOM facing in
       double rad1 = 800*cm;
       double rad2 = 1800*cm;
@@ -524,13 +534,15 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
       for(int ip = 0; ip < 5; ip++) {
 	if (ip==0) zposb = 2700*cm;
 	if (ip==1) zposb = 1350*cm;
-	if (ip==2) zposb = 0*cm;
+	//	if (ip==2) zposb = 0*cm;
+	if (ip==2) zposb = 60*cm;
 	if (ip==3) zposb = -1350*cm;
 	if (ip==4) zposb = -2700*cm;
 	for(int theta = 0; theta < 16; theta++) {
 	  if (ip == 1 || ip == 3) {
 	    xposb = maxr*(std::cos((theta+0.0)*(std::acos(-1))/8));
 	    yposb = maxr*(std::sin((theta+0.0)*(std::acos(-1))/8));
+	    //std::cerr << "POS theta " << theta << " : " << xposb << ", " << yposb << std::endl;
 	  }
 	  else {
 	    xposb = maxr*(std::cos((theta+0.5)*(std::acos(-1))/8));
@@ -572,7 +584,11 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
       }
       for (int i = 0; i < 3; i++) {
 	//double zpos = 3650*cm; // top facing down
-	double zpos = -3460*cm; // bottom facing down
+	//double zpos = -3460*cm; // bottom facing down
+	//double zpos = -3360*cm; // NEW bottom facing downdouble zpos = 3362.01*cm;
+	double zpos = -3362.01*cm;
+	//double zpos = -(OD_inner_height/2 + 10*cm); // bottom facing down
+	//double zpos = (OD_inner_height/2 + 190*cm); // top facing down
 	double xpos = 0.;
 	double ypos = 0.;
 	//G4ThreeVector postemp(0, 0, zpos);
@@ -677,8 +693,12 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	}
       }
       for (int i = 0; i < 3; i++) {
-	double zpos = 3460*cm; // top facing up
+	//double zpos = 3460*cm; // top facing up
+	//double zpos = 3360*cm; // NEW top facing up
 	//double zpos = 3650*cm; // top facing down
+	double zpos = 3362.01*cm;
+	//double zpos = (OD_inner_height/2 + 10*cm); // top facing up
+	//double zpos = -(OD_inner_height/2 + 190*cm); // bottom facing up
 	double xpos = 0.;
 	double ypos = 0.;
 	//G4ThreeVector postemp(0, 0, zpos);
@@ -789,10 +809,15 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
       particleGunTop->SetParticleDefinition(G4OpticalPhoton::Definition());
       particleGunTop->SetNumberOfParticles(c_particle);
 
+      //G4double energytemp = 3.3509 * eV; // 370 nm
       G4double energytemp = 3.0996 * eV; // 400 nm
       double rad1 = 800*cm;
-      double zpos = 3460*cm; // top facing up
+      //double zpos = 3460*cm; // top facing up
       //double zpos = 3650*cm; // top facing down
+      double zpos = 3362.01*cm;
+      //double zpos = 3547.01*cm;
+      //double zpos = (OD_inner_height/2 + 10*cm); // top facing up
+	//double zpos = (OD_inner_height/2 + 190*cm); // top facing down
       double xpos = rad1*(std::cos(3*(std::acos(-1)/12)));
       double ypos = rad1*(std::sin(3*(std::acos(-1)/12)));
       G4ThreeVector postemp(xpos,ypos,zpos);
@@ -829,13 +854,23 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
       particleGunBarrel->SetParticleDefinition(G4OpticalPhoton::Definition());
       particleGunBarrel->SetNumberOfParticles(c_particle);
 
-      G4double energytemp = 3.0996 * eV; // 400 nm
-      double maxr = 3361*cm; // NEW HK GEOM facing out
+      //G4double energytemp = 3.3509 * eV; // 370 nm
+            G4double energytemp = 3.0996 * eV; // 400 nm
+      double temp_OD_inner_radius = 32.4;
+      //double maxr = ((temp_OD_inner_radius*100) + 60 + 2 + 0.01 + 10)*cm; // facing out
+      //double maxr = 3312.01*cm;
+      double maxr = 3397.01*cm; // facing in
+      std::cerr << "temp_OD_inner_radius " << temp_OD_inner_radius << ", maxr " << maxr << std::endl;
+      //double maxr = OD_inner_radius + 95*cm; // facing in
+      //double maxr = 3322*cm; // NEW NEW HK GEOM facing out
+      //double maxr = 3400*cm; // NEW NEW HK GEOM facing in
+      //double maxr = 3361*cm; // NEW HK GEOM facing out
       //double maxr = 3451*cm; // NEW HK GEOM facing in
       double xposb = -9999*cm;
       double yposb = -9999*cm;
-      double zposb = 0*cm;
-      double theta = 0;
+      //double zposb = 60*cm;
+      double zposb = 95*cm;
+      double theta = 0.05;
       xposb = maxr*(std::cos((theta+0.5)*(std::acos(-1))/8));
       yposb = maxr*(std::sin((theta+0.5)*(std::acos(-1))/8));
       G4ThreeVector postempb(xposb,yposb,zposb);
@@ -851,10 +886,10 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
       G4double py = sintheta*sinphi;
       G4double pz = costheta;
       G4ThreeVector XPrime = G4ThreeVector(0.,0.,1.);
-      //G4ThreeVector YPrime = G4ThreeVector(-yposb,xposb,0.); // Facing in
-      G4ThreeVector YPrime = G4ThreeVector(yposb,-xposb,0.); // Facing out
-      //G4ThreeVector ZPrime = G4ThreeVector(-xposb,-yposb,0.); // Facing in
-      G4ThreeVector ZPrime = G4ThreeVector(xposb,yposb,0.); // Facing out
+      G4ThreeVector YPrime = G4ThreeVector(-yposb,xposb,0.); // Facing in
+      //G4ThreeVector YPrime = G4ThreeVector(yposb,-xposb,0.); // Facing out
+      G4ThreeVector ZPrime = G4ThreeVector(-xposb,-yposb,0.); // Facing in
+      //G4ThreeVector ZPrime = G4ThreeVector(xposb,yposb,0.); // Facing out
       G4double finx = (px*XPrime.x()) + (py*YPrime.x()) + (pz*ZPrime.x());
       G4double finy = (px*XPrime.y()) + (py*YPrime.y()) + (pz*ZPrime.y());
       G4double finz = (px*XPrime.z()) + (py*YPrime.z()) + (pz*ZPrime.z());
@@ -877,12 +912,13 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
       // ------------------------- collimated barrel --------------------
       particleGunBarrel->SetParticleDefinition(G4OpticalPhoton::Definition());
       particleGunBarrel->SetNumberOfParticles(c_particle);
-      double xposb = 3361*cm;
+      double xposb = 3314.91*cm;//OD_inner_radius + 10*cm + 2.9*cm;
       double yposb = 0*cm;
-      double zposb = 3460*cm;
+      double zposb = -3352.01*cm;//-OD_inner_height/2;
       G4ThreeVector postemp(xposb,yposb,zposb);
       particleGunBarrel->SetParticlePosition(postemp);
-      G4double energytemp = 3.0996 * eV; // 400 nm
+      G4double energytemp = 3.3509 * eV; // 370 nm
+      //      G4double energytemp = 3.0996 * eV; // 400 nm
       G4double rndm = G4UniformRand();
       G4double rndm2 = G4UniformRand();
       G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));
@@ -892,7 +928,7 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
       G4double cosphi = std::cos(phi);
       G4double px = sintheta*cosphi;
       G4double py = sintheta*sinphi;
-      G4double pz = -costheta;
+      G4double pz = costheta;
       G4ThreeVector momtemp(px,py,pz);
       particleGunBarrel->SetParticleMomentumDirection(momtemp);
       particleGunBarrel->SetParticleEnergy(energytemp);
@@ -914,13 +950,14 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
       //	std::cerr << "Running bottom with " << c_particle << " photons and a half angle of " << ledtheta << " degrees" << std::endl;
       particleGunBottom->SetParticleDefinition(G4OpticalPhoton::Definition());
       particleGunBottom->SetNumberOfParticles(c_particle);
-      double xpos = 3361*cm;
+      double xpos = 3302.01*cm;//OD_inner_radius;
       double ypos = 0*cm;
-      double zpos = -3460*cm; // zpos of start of OD + PMT exposed height
+      double zpos = -3364.91*cm;//-(OD_inner_height/2 + 10*cm + 2.9*cm); // zpos of start of OD + 2.9cm PMT expose height + 10cm to clear PMTs
       //double ledtheta = 2*deg;
       G4ThreeVector postemp(xpos,ypos,zpos);
       particleGunBottom->SetParticlePosition(postemp);
-      G4double energytemp = 3.0996 * eV; // 400 nm
+      G4double energytemp = 3.3509 * eV; // 370 nm
+      //G4double energytemp = 3.0996 * eV; // 400 nm
       G4double rndm = G4UniformRand();
       G4double rndm2 = G4UniformRand();
       G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));
@@ -956,13 +993,14 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
       //	std::cerr << "Running top with " << c_particle << " photons and a half angle of " << ledtheta << " degrees" << std::endl;
       particleGunTop->SetParticleDefinition(G4OpticalPhoton::Definition());
       particleGunTop->SetNumberOfParticles(c_particle);
-      double xpos = 3361*cm;
+      double xpos = 3302.01*cm;//OD_inner_radius;
       double ypos = 0*cm;
-      double zpos = 3460*cm; // zpos of start of OD + PMT exposed height
+      double zpos = 3364.91*cm;//(OD_inner_height/2 + 10*cm + 2.9*cm); // zpos of start of OD + 2.9cm PMT expose height + 10cm to clear PMTs
       //double ledtheta = 2*deg;
       G4ThreeVector postemp(xpos,ypos,zpos);
       particleGunTop->SetParticlePosition(postemp);
-      G4double energytemp = 3.0996 * eV; // 400 nm
+      G4double energytemp = 3.3509 * eV; // 370 nm
+      //G4double energytemp = 3.0996 * eV; // 400 nm
       G4double rndm = G4UniformRand();
       G4double rndm2 = G4UniformRand();
       G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));

@@ -74,9 +74,9 @@ G4double WCSimDetectorConstruction::GetPMTQE(G4String CollectionName, G4double P
   }
   wavelengthQE = wavelengthQE *ratio;
 
-  //  return wavelengthQE;
+  return wavelengthQE;
   //  	return 2*wavelengthQE; //CPFLAG doubled wavelengthQE
-    return 3*wavelengthQE; //CPFLAG tripled wavelengthQE
+  //return 3*wavelengthQE; //CPFLAG tripled wavelengthQE
 }
 
 
@@ -102,12 +102,12 @@ G4double WCSimDetectorConstruction::GetStackingPMTQE(G4double PhotonWavelength, 
 
   if(flag==1){
     if(PMT && WLS){
-	  //	  	  return (G4float)(std::max(PMT->GetgQE()->Eval(PhotonWavelength,0,"S"),
-	  //			  WLS->GetgAbs()->Eval(PhotonWavelength,0,"S")))*ratio;
+	   	  return (G4float)(std::max(PMT->GetgQE()->Eval(PhotonWavelength,0,"S"),
+	  		  WLS->GetgAbs()->Eval(PhotonWavelength,0,"S")))*ratio;
 	  //return (G4float)2*(std::max(PMT->GetgQE()->Eval(PhotonWavelength,0,"S"),
 	  //	  			  WLS->GetgAbs()->Eval(PhotonWavelength,0,"S")))*ratio; //CPFLAG doubled
-	  	  	  	  return (G4float)3*(std::max(PMT->GetgQE()->Eval(PhotonWavelength,0,"S"),
-	  	  WLS->GetgAbs()->Eval(PhotonWavelength,0,"S")))*ratio; //CPFLAG tripled
+	  //	  	  	  	  return (G4float)3*(std::max(PMT->GetgQE()->Eval(PhotonWavelength,0,"S"),
+	  //	  WLS->GetgAbs()->Eval(PhotonWavelength,0,"S")))*ratio; //CPFLAG tripled
     } else {
 	  //return (G4float)(PMT->GetgQE()->Eval(PhotonWavelength,0,"S"))*ratio;
       //return (G4float)2*(PMT->GetgQE()->Eval(PhotonWavelength,0,"S"))*ratio; //CPFLAG doubled
@@ -115,8 +115,8 @@ G4double WCSimDetectorConstruction::GetStackingPMTQE(G4double PhotonWavelength, 
     }
   }
   //else if (flag==0) return PMT->GetmaxQE()*ratio*2; //CPFLAG doubled
-  else if (flag==0) return PMT->GetmaxQE()*ratio*3; //CPFLAG tripled
-  //else if (flag==0) return PMT->GetmaxQE()*ratio;
+  //else if (flag==0) return PMT->GetmaxQE()*ratio*3; //CPFLAG tripled
+  else if (flag==0) return PMT->GetmaxQE()*ratio;
   else return 0;
 
 }

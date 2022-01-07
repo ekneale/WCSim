@@ -33,7 +33,7 @@ void file_exists(const char * filename) {
 int main(int argc,char** argv)
 {
 
-  
+  gRandom->SetSeed(0);
   // Construct the default run manager
   G4RunManager* runManager = new G4RunManager;
 
@@ -45,8 +45,17 @@ int main(int argc,char** argv)
   WCSimTuningParameters* tuningpars = new WCSimTuningParameters();
 
   // Get the tuning parameters
-  file_exists("macros/tuning_parameters.mac");
-  UI->ApplyCommand("/control/execute macros/tuning_parameters.mac");
+  if (argc < 3) {
+    file_exists("macros/tuning_parameters.mac");
+    UI->ApplyCommand("/control/execute macros/tuning_parameters.mac");
+  } else {
+    G4String command = "/control/execute ";
+    G4String fileName = argv[2];
+
+    file_exists(fileName);
+
+    UI->ApplyCommand(command+fileName);
+  }
 
   // define random number generator parameters
   WCSimRandomParameters *randomparameters = new WCSimRandomParameters();
@@ -129,6 +138,7 @@ int main(int argc,char** argv)
   { 
     G4String command = "/control/execute ";
     G4String fileName = argv[1];
+
     file_exists(fileName);
     if(fileName == "vis.mac"){
       G4cout << "ERROR: Execute without arg for interactive mode" << G4endl;

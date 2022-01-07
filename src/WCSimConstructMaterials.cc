@@ -866,30 +866,9 @@ void WCSimDetectorConstruction::ConstructMaterials()
         0.94, 0.93, 0.92, 0.91, 0.90,
         0.89, 0.86};
 
-  /*G4double TyREFLECTIVITY[NUMENTRIES_TY] = // Tyvek refelctivity
-      { 0.8,
-        0.8, 0.8, 0.8, 0.8, 0.8,
-        0.8, 0.8, 0.8, 0.8, 0.8,
-        0.8, 0.8, 0.8, 0.8, 0.8,
-        0.8, 0.8, 0.8, 0.8, 0.8,
-        0.8, 0.8, 0.8, 0.8, 0.8,
-        0.8, 0.8, 0.8, 0.8, 0.8,
-        0.8, 0.8};
-  */ 
-
-  /* G4double TyREFLECTIVITY[NUMENTRIES_TY] = // Tyvek refelctivity
-      { 0.9,
-        0.9, 0.9, 0.9, 0.9, 0.9,
-        0.9, 0.9, 0.9, 0.9, 0.9,
-        0.9, 0.9, 0.9, 0.9, 0.9,
-        0.9, 0.9, 0.9, 0.9, 0.9,
-        0.9, 0.9, 0.9, 0.9, 0.9,
-        0.9, 0.9, 0.9, 0.9, 0.9,
-        0.9, 0.9};
-*/
   for(int i=0; i<NUMENTRIES_TY; i++)
     TyREFLECTIVITY[i] *= OD_tyvek_reflectivity_scaling_factor;
-
+  
   G4MaterialPropertiesTable *MPT_Tyvek = new G4MaterialPropertiesTable();
   // MPT_Tyvek->AddProperty("RINDEX", PP, RINDEX_tyvek, NUM);
   // MPT_Tyvek->AddProperty("ABSLENGTH", ENERGY_water, BLACKABS_blacksheet, NUMENTRIES_water);
