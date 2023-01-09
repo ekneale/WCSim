@@ -105,6 +105,7 @@ WCSimPrimaryGeneratorAction::WCSimPrimaryGeneratorAction(
   useColTop = false;
   useTimeTop = false;
   useSatTop = false;
+  useSatBottom = false;
   useSatBarrel = false;
   useIWCDFullInjectors = false;
   useCosmics            = false;
@@ -503,6 +504,11 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
   }
   else if(useCalibration) {
+
+    double planck = 4.1357e-15; // ev.s
+    double lightspeed = 299792458e9; // nm/s
+    G4double energytemp = (planck*lightspeed/calib_wavelength) * eV;
+
     if(useFullInjectors) {
 
       //	std::cerr << "Running all injectors with " << c_particle << " photons and a half angle of " << ledtheta << " degrees" << std::endl;
@@ -514,17 +520,11 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
       particleGunBottom->SetParticleDefinition(G4OpticalPhoton::Definition());
       particleGunBottom->SetNumberOfParticles(c_particle);
 
-      G4double energytemp = 3.0996 * eV; // 400 nm
-      //G4double energytemp = 3.3509 * eV; // 370 nm
-      //double maxr = 3312.01*cm;
       double maxr = 3317.01*cm;
-      //double maxr = OD_inner_radius + 10*cm; // facing out
-      //double maxr = OD_inner_radius + 95*cm; // facing in
-      //double maxr = 3320*cm; // NEW NEW HK GEOM facing out
-      //double maxr = 3361*cm; // NEW HK GEOM facing out
-      //double maxr = 3451*cm; // NEW HK GEOM facing in
+      //double maxr = OD_inner_radius + 10*cm; // facing out/ For some reason getting the radius didn't work
+      //double maxr = OD_inner_radius + 95*cm; // facing in/  hence the hard code above
       double rad1 = 800*cm;
-      double rad2 = 1800*cm;
+      double rad2 = 1810*cm;// try adding 10 cm to miss struts
       double rad3 = 2800*cm;
       double xposb = -9999*cm;
       double yposb = -9999*cm;
@@ -534,7 +534,7 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
       for(int ip = 0; ip < 5; ip++) {
 	if (ip==0) zposb = 2700*cm;
 	if (ip==1) zposb = 1350*cm;
-	//	if (ip==2) zposb = 0*cm;
+	//	if (ip==2) zposb = 0*cm; // this position intersected PMTs
 	if (ip==2) zposb = 60*cm;
 	if (ip==3) zposb = -1350*cm;
 	if (ip==4) zposb = -2700*cm;
@@ -548,6 +548,28 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	    xposb = maxr*(std::cos((theta+0.5)*(std::acos(-1))/8));
 	    yposb = maxr*(std::sin((theta+0.5)*(std::acos(-1))/8));
 	  }
+      /* // This is a 7 ring barrel option, if people decide they want
+	 // as many vertical settings in the OD as the ID
+	for(int ip = 0; ip < 7; ip++) {
+	if (ip==0) zposb = 2900*cm;
+	if (ip==1) zposb = 1950*cm;
+	if (ip==2) zposb = 1000*cm;
+	if (ip==3) zposb = 60*cm;
+	if (ip==4) zposb = -900*cm;
+	if (ip==5) zposb = -1900*cm;
+	if (ip==6) zposb = -2900*cm;
+	int theta_lim = 12;
+	if (ip==2 || ip==4) theta_lim = 10;
+	for(int theta = 0; theta < theta_lim; theta++) {
+	  /*if (ip == 1 || ip == 3) {
+	    xposb = maxr*(std::cos((theta+0.0)*(std::acos(-1))/(theta_lim/2)));
+	    yposb = maxr*(std::sin((theta+0.0)*(std::acos(-1))/(theta_lim/2)));
+	    //std::cerr << "POS theta " << theta << " : " << xposb << ", " << yposb << std::endl;
+	  }
+	  else {
+	    xposb = maxr*(std::cos((theta+0.5)*(std::acos(-1))/(theta_lim/2)));
+	    yposb = maxr*(std::sin((theta+0.5)*(std::acos(-1))/(theta_lim/2)));
+	    //	  }*/
 	  G4ThreeVector postempb(xposb,yposb,zposb);
 	  particleGunBarrel->SetParticlePosition(postempb);
 	  G4double rndm = G4UniformRand();
@@ -583,9 +605,6 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	}
       }
       for (int i = 0; i < 3; i++) {
-	//double zpos = 3650*cm; // top facing down
-	//double zpos = -3460*cm; // bottom facing down
-	//double zpos = -3360*cm; // NEW bottom facing downdouble zpos = 3362.01*cm;
 	double zpos = -3362.01*cm;
 	//double zpos = -(OD_inner_height/2 + 10*cm); // bottom facing down
 	//double zpos = (OD_inner_height/2 + 190*cm); // top facing down
@@ -594,14 +613,10 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	//G4ThreeVector postemp(0, 0, zpos);
 	if (i==0) {
 	  for (int angfrac1 = 0; angfrac1 < 3; angfrac1++) {
-	    //	    if (angfrac1 % 2 == 0) continue;
 	    double xpos = rad1*(std::cos((angfrac1*8 + 3)*(std::acos(-1)/12)));
 	    double ypos = rad1*(std::sin((angfrac1*8 + 3)*(std::acos(-1)/12)));
 	    G4ThreeVector postemp(xpos,ypos,zpos);
 	    particleGunBottom->SetParticlePosition(postemp);
-	    //particleGun->SetNumberOfParticles(5000);
-	    //	    G4double energytemp = 2.505 * eV;
-	    //G4double energytemp = 3.0996 * eV; // 400 nm
 	    G4double rndm = G4UniformRand();
 	    G4double rndm2 = G4UniformRand();
 	    G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));
@@ -612,7 +627,6 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	    G4double px = sintheta*cosphi;
 	    G4double py = sintheta*sinphi;
 	    G4double pz = -costheta; // Facing down
-	    //G4double pz = -1;
 	    G4ThreeVector momtemp(px,py,pz);
 	    particleGunBottom->SetParticleMomentumDirection(momtemp);
 	    particleGunBottom->SetParticleEnergy(energytemp);
@@ -627,14 +641,10 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	}
 	if (i==1) {
 	  for (int angfrac2 = 0; angfrac2 < 6; angfrac2++) {
-	    //	    if (angfrac2 % 4 == 0) continue;
 	    double xpos = rad2*(std::cos((angfrac2*4 + 1)*(std::acos(-1)/12)));
 	    double ypos = rad2*(std::sin((angfrac2*4 + 1)*(std::acos(-1)/12)));
 	    G4ThreeVector postemp(xpos,ypos,zpos);
 	    particleGunBottom->SetParticlePosition(postemp);
-	    //particleGun->SetNumberOfParticles(5000);
-	    //G4double energytemp = 2.505 * eV;
-	    //G4double energytemp = 3.0996 * eV; // 400 nm
 	    G4double rndm = G4UniformRand();
 	    G4double rndm2 = G4UniformRand();
 	    G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));
@@ -645,7 +655,6 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	    G4double px = sintheta*cosphi;
 	    G4double py = sintheta*sinphi;
 	    G4double pz = -costheta;
-	    //G4double pz = -1;
 	    G4ThreeVector momtemp(px,py,pz);
 	    particleGunBottom->SetParticleMomentumDirection(momtemp);
 	    particleGunBottom->SetParticleEnergy(energytemp);
@@ -660,14 +669,10 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	}
 	if (i==2) {
 	  for (int angfrac3 = 0; angfrac3 < 12; angfrac3++) {
-	    //	    	      if (angfrac3 % 8 == 0) continue;
 	    double xpos = rad3*(std::cos((angfrac3)*(std::acos(-1)/6)));
 	    double ypos = rad3*(std::sin((angfrac3)*(std::acos(-1)/6)));
 	    G4ThreeVector postemp(xpos,ypos,zpos);
 	    particleGunBottom->SetParticlePosition(postemp);
-	    //particleGun->SetNumberOfParticles(5000);
-	    //G4double energytemp = 2.505 * eV;
-	    //	    G4double energytemp = 3.0996 * eV; // 400 nm
 	    G4double rndm = G4UniformRand();
 	    G4double rndm2 = G4UniformRand();
 	    G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));
@@ -678,7 +683,6 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	    G4double px = sintheta*cosphi;
 	    G4double py = sintheta*sinphi;
 	    G4double pz = -costheta;
-	    //G4double pz = -1;
 	    G4ThreeVector momtemp(px,py,pz);
 	    particleGunBottom->SetParticleMomentumDirection(momtemp);
 	    particleGunBottom->SetParticleEnergy(energytemp);
@@ -691,27 +695,18 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	    SetBeamPDG(0);
 	  }
 	}
-      }
+	}
       for (int i = 0; i < 3; i++) {
-	//double zpos = 3460*cm; // top facing up
-	//double zpos = 3360*cm; // NEW top facing up
-	//double zpos = 3650*cm; // top facing down
 	double zpos = 3362.01*cm;
 	//double zpos = (OD_inner_height/2 + 10*cm); // top facing up
-	//double zpos = -(OD_inner_height/2 + 190*cm); // bottom facing up
 	double xpos = 0.;
 	double ypos = 0.;
-	//G4ThreeVector postemp(0, 0, zpos);
 	if (i==0) {
 	  for (int angfrac1 = 0; angfrac1 < 3; angfrac1++) {
-	    //	    	      if (angfrac1 % 2 == 0) continue;
 	    double xpos = rad1*(std::cos((angfrac1*8 + 3)*(std::acos(-1)/12)));
 	    double ypos = rad1*(std::sin((angfrac1*8 + 3)*(std::acos(-1)/12)));
 	    G4ThreeVector postemp(xpos,ypos,zpos);
 	    particleGunTop->SetParticlePosition(postemp);
-	    //particleGun->SetNumberOfParticles(5000);
-	    //G4double energytemp = 2.505 * eV;
-	    //G4double energytemp = 3.0996 * eV; // 400 nm
 	    G4double rndm = G4UniformRand();
 	    G4double rndm2 = G4UniformRand();
 	    G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));
@@ -722,7 +717,6 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	    G4double px = sintheta*cosphi;
 	    G4double py = sintheta*sinphi;
 	    G4double pz = costheta; // Facing up
-	    //G4double pz = -costheta; // Facing down
 	    G4ThreeVector momtemp(px,py,pz);
 	    particleGunTop->SetParticleMomentumDirection(momtemp);
 	    particleGunTop->SetParticleEnergy(energytemp);
@@ -737,14 +731,10 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	}
 	if (i==1) {
 	  for (int angfrac2 = 0; angfrac2 < 6; angfrac2++) {
-	    //	    	      if (angfrac2 % 4 == 0) continue;
 	    double xpos = rad2*(std::cos((4*angfrac2 + 1)*(std::acos(-1)/12)));
 	    double ypos = rad2*(std::sin((4*angfrac2 + 1)*(std::acos(-1)/12)));
 	    G4ThreeVector postemp(xpos,ypos,zpos);
 	    particleGunTop->SetParticlePosition(postemp);
-	    //particleGun->SetNumberOfParticles(5000);
-	    //G4double energytemp = 2.505 * eV;
-	    //	    G4double energytemp = 3.0996 * eV; // 400 nm
 	    G4double rndm = G4UniformRand();
 	    G4double rndm2 = G4UniformRand();
 	    G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));
@@ -755,7 +745,6 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	    G4double px = sintheta*cosphi;
 	    G4double py = sintheta*sinphi;
 	    G4double pz = costheta;
-	    //G4double pz = -1;
 	    G4ThreeVector momtemp(px,py,pz);
 	    particleGunTop->SetParticleMomentumDirection(momtemp);
 	    particleGunTop->SetParticleEnergy(energytemp);
@@ -770,14 +759,10 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	}
 	if (i==2) {
 	  for (int angfrac3 = 0; angfrac3 < 12; angfrac3++) {
-	    //	    	      if (angfrac3 % 8 == 0) continue;
 	    double xpos = rad3*(std::cos((angfrac3)*(std::acos(-1)/6)));
 	    double ypos = rad3*(std::sin((angfrac3)*(std::acos(-1)/6)));
 	    G4ThreeVector postemp(xpos,ypos,zpos);
 	    particleGunTop->SetParticlePosition(postemp);
-	    //particleGun->SetNumberOfParticles(5000);
-	    //	    G4double energytemp = 2.505 * eV;
-	    //G4double energytemp = 3.0996 * eV; // 400 nm
 	    G4double rndm = G4UniformRand();
 	    G4double rndm2 = G4UniformRand();
 	    G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));
@@ -788,7 +773,6 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	    G4double px = sintheta*cosphi;
 	    G4double py = sintheta*sinphi;
 	    G4double pz = costheta;
-	    //G4double pz = -1;
 	    G4ThreeVector momtemp(px,py,pz);
 	    particleGunTop->SetParticleMomentumDirection(momtemp);
 	    particleGunTop->SetParticleEnergy(energytemp);
@@ -802,22 +786,17 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	  }
 	}
       }
-    } // ------------------------------ end of light array ------------------------------
+    } // ------------------------------ end of diffuse light array ------------------------------
+
+    // ------------- One single inner ring source for top cap saturation studies -----------------
 
     if(useSatTop) {
 
       particleGunTop->SetParticleDefinition(G4OpticalPhoton::Definition());
       particleGunTop->SetNumberOfParticles(c_particle);
 
-      //G4double energytemp = 3.3509 * eV; // 370 nm
-      G4double energytemp = 3.0996 * eV; // 400 nm
       double rad1 = 800*cm;
-      //double zpos = 3460*cm; // top facing up
-      //double zpos = 3650*cm; // top facing down
-      double zpos = 3362.01*cm;
-      //double zpos = 3547.01*cm;
-      //double zpos = (OD_inner_height/2 + 10*cm); // top facing up
-	//double zpos = (OD_inner_height/2 + 190*cm); // top facing down
+      double zpos = 3362.01*cm; 
       double xpos = rad1*(std::cos(3*(std::acos(-1)/12)));
       double ypos = rad1*(std::sin(3*(std::acos(-1)/12)));
       G4ThreeVector postemp(xpos,ypos,zpos);
@@ -832,7 +811,45 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
       G4double px = sintheta*cosphi;
       G4double py = sintheta*sinphi;
       G4double pz = costheta; // Facing up
-      //G4double pz = -costheta; // Facing down
+      G4double time = G4RandFlat::shoot(20.0,40.0);
+      particleGunTop->SetParticleTime(time);
+      G4ThreeVector momtemp(px,py,pz);
+      std::cerr << "xpos " << xpos << ", ypos " << ypos << ", zpos " << zpos << std::endl;
+      std::cerr << "finx " << px << ", finy " << py << ", finz " << pz << std::endl;
+      particleGunTop->SetParticleMomentumDirection(momtemp);
+      particleGunTop->SetParticleEnergy(energytemp);
+      particleGunTop->SetParticlePolarization(G4RandomDirection());
+      particleGunTop->GeneratePrimaryVertex(anEvent);
+
+      SetVtx(postemp);
+      SetBeamEnergy(energytemp);
+      SetBeamDir(momtemp.unit());
+      SetBeamPDG(0);
+    }
+
+    // ------------- One single inner ring source for bottom cap saturation studies -----------------
+
+    if(useSatBottom) {
+
+      particleGunTop->SetParticleDefinition(G4OpticalPhoton::Definition());
+      particleGunTop->SetNumberOfParticles(c_particle);
+
+      double rad1 = 800*cm;
+      double zpos = -3362.01*cm; 
+      double xpos = rad1*(std::cos(3*(std::acos(-1)/12)));
+      double ypos = rad1*(std::sin(3*(std::acos(-1)/12)));
+      G4ThreeVector postemp(xpos,ypos,zpos);
+      particleGunTop->SetParticlePosition(postemp);
+      G4double rndm = G4UniformRand();
+      G4double rndm2 = G4UniformRand();
+      G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));
+      G4double sintheta = std::sqrt(1. - costheta*costheta);
+      G4double phi = rndm2*2*(std::acos(-1));
+      G4double sinphi = std::sin(phi);
+      G4double cosphi = std::cos(phi);
+      G4double px = sintheta*cosphi;
+      G4double py = sintheta*sinphi;
+      G4double pz = -costheta; // Facing down
       G4double time = G4RandFlat::shoot(20.0,40.0);
       particleGunTop->SetParticleTime(time);
       G4ThreeVector momtemp(px,py,pz);
@@ -849,27 +866,18 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
       SetBeamPDG(0);
     }
     
+
+    // ------------- One single mid-height source for barrel saturation studies -----------------    
     if(useSatBarrel) {
       
       particleGunBarrel->SetParticleDefinition(G4OpticalPhoton::Definition());
       particleGunBarrel->SetNumberOfParticles(c_particle);
 
-      //G4double energytemp = 3.3509 * eV; // 370 nm
-            G4double energytemp = 3.0996 * eV; // 400 nm
       double temp_OD_inner_radius = 32.4;
-      //double maxr = ((temp_OD_inner_radius*100) + 60 + 2 + 0.01 + 10)*cm; // facing out
-      //double maxr = 3312.01*cm;
-      double maxr = 3397.01*cm; // facing in
-      std::cerr << "temp_OD_inner_radius " << temp_OD_inner_radius << ", maxr " << maxr << std::endl;
-      //double maxr = OD_inner_radius + 95*cm; // facing in
-      //double maxr = 3322*cm; // NEW NEW HK GEOM facing out
-      //double maxr = 3400*cm; // NEW NEW HK GEOM facing in
-      //double maxr = 3361*cm; // NEW HK GEOM facing out
-      //double maxr = 3451*cm; // NEW HK GEOM facing in
+      double maxr = 3317.01*cm; // facing out
       double xposb = -9999*cm;
       double yposb = -9999*cm;
-      //double zposb = 60*cm;
-      double zposb = 95*cm;
+      double zposb = 60*cm;
       double theta = 0.05;
       xposb = maxr*(std::cos((theta+0.5)*(std::acos(-1))/8));
       yposb = maxr*(std::sin((theta+0.5)*(std::acos(-1))/8));
@@ -886,10 +894,10 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
       G4double py = sintheta*sinphi;
       G4double pz = costheta;
       G4ThreeVector XPrime = G4ThreeVector(0.,0.,1.);
-      G4ThreeVector YPrime = G4ThreeVector(-yposb,xposb,0.); // Facing in
-      //G4ThreeVector YPrime = G4ThreeVector(yposb,-xposb,0.); // Facing out
-      G4ThreeVector ZPrime = G4ThreeVector(-xposb,-yposb,0.); // Facing in
-      //G4ThreeVector ZPrime = G4ThreeVector(xposb,yposb,0.); // Facing out
+      //G4ThreeVector YPrime = G4ThreeVector(-yposb,xposb,0.); // Facing in
+      G4ThreeVector YPrime = G4ThreeVector(yposb,-xposb,0.); // Facing out
+      //G4ThreeVector ZPrime = G4ThreeVector(-xposb,-yposb,0.); // Facing in
+      G4ThreeVector ZPrime = G4ThreeVector(xposb,yposb,0.); // Facing out
       G4double finx = (px*XPrime.x()) + (py*YPrime.x()) + (pz*ZPrime.x());
       G4double finy = (px*XPrime.y()) + (py*YPrime.y()) + (pz*ZPrime.y());
       G4double finz = (px*XPrime.z()) + (py*YPrime.z()) + (pz*ZPrime.z());
@@ -907,6 +915,7 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
       SetBeamPDG(0);
     }
 
+    //--------------------------------- Barrel collimator -------------------------
     else if(useColBarrel) {
       //std::cerr << "Running barrel with " << c_particle << " photons and a half angle of " << ledtheta << " degrees" << std::endl;
       // ------------------------- collimated barrel --------------------
@@ -917,8 +926,6 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
       double zposb = -3352.01*cm;//-OD_inner_height/2;
       G4ThreeVector postemp(xposb,yposb,zposb);
       particleGunBarrel->SetParticlePosition(postemp);
-      G4double energytemp = 3.3509 * eV; // 370 nm
-      //      G4double energytemp = 3.0996 * eV; // 400 nm
       G4double rndm = G4UniformRand();
       G4double rndm2 = G4UniformRand();
       G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));
@@ -934,8 +941,6 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
       particleGunBarrel->SetParticleEnergy(energytemp);
       particleGunBarrel->SetParticlePolarization(G4RandomDirection());
       particleGunBarrel->GeneratePrimaryVertex(anEvent);
-      //std::cerr << "Position x: " << particleGunBarrel->GetParticlePosition().x() << " y: " << particleGunBarrel->GetParticlePosition().y() << " z: " << particleGunBarrel->GetParticlePosition().z() << std::endl;
-      //std::cerr << "Direction x: " << particleGunBarrel->GetParticleMomentumDirection().x() << " y: " << particleGunBarrel->GetParticleMomentumDirection().y() << " z: " << particleGunBarrel->GetParticleMomentumDirection().z() << std::endl;
       SetVtx(postemp);
       SetBeamEnergy(energytemp);
       SetBeamDir(momtemp.unit());
@@ -944,6 +949,7 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
       // ------------------------ end of collimated barrel -----------------
 
     }
+
     else if(useColBottom) {
       // ---------------- single collimated bottom cap pointing across -----
 
@@ -953,11 +959,8 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
       double xpos = 3302.01*cm;//OD_inner_radius;
       double ypos = 0*cm;
       double zpos = -3364.91*cm;//-(OD_inner_height/2 + 10*cm + 2.9*cm); // zpos of start of OD + 2.9cm PMT expose height + 10cm to clear PMTs
-      //double ledtheta = 2*deg;
       G4ThreeVector postemp(xpos,ypos,zpos);
       particleGunBottom->SetParticlePosition(postemp);
-      G4double energytemp = 3.3509 * eV; // 370 nm
-      //G4double energytemp = 3.0996 * eV; // 400 nm
       G4double rndm = G4UniformRand();
       G4double rndm2 = G4UniformRand();
       G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));
@@ -986,21 +989,21 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
       SetBeamPDG(0);
       
       // ------------ end of single collimated bottom cap pointing across -----
-
     }
+
+    //---------------------- Top Cap Collimator
     else if(useColTop) {
 
       //	std::cerr << "Running top with " << c_particle << " photons and a half angle of " << ledtheta << " degrees" << std::endl;
       particleGunTop->SetParticleDefinition(G4OpticalPhoton::Definition());
       particleGunTop->SetNumberOfParticles(c_particle);
-      double xpos = 3302.01*cm;//OD_inner_radius;
+      double xpos = 3308.03*cm;//OD_inner_radius;
       double ypos = 0*cm;
+      xpos = 3200*cm; // move in to avoid outer frame of support structure
+      ypos = 0*cm;
       double zpos = 3364.91*cm;//(OD_inner_height/2 + 10*cm + 2.9*cm); // zpos of start of OD + 2.9cm PMT expose height + 10cm to clear PMTs
-      //double ledtheta = 2*deg;
       G4ThreeVector postemp(xpos,ypos,zpos);
       particleGunTop->SetParticlePosition(postemp);
-      G4double energytemp = 3.3509 * eV; // 370 nm
-      //G4double energytemp = 3.0996 * eV; // 400 nm
       G4double rndm = G4UniformRand();
       G4double rndm2 = G4UniformRand();
       G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));
@@ -1030,52 +1033,41 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
     }
     else if(useTimeTop) {
-
-      std::cerr << "using time top" << std::endl;
+      //xpos 73.2285, ypos 73.2285, zpos -3348.93
+      std::cerr << "using time top but now bottom and less about time" << std::endl;
       particleGunTop->SetParticleDefinition(G4OpticalPhoton::Definition());
       particleGunTop->SetNumberOfParticles(c_particle);
 
-      std::vector<double> gaussian_times;
       G4double rndm = G4UniformRand();
       G4double rndm2 = G4UniformRand();
-      for (int time_vec = 0; time_vec < 20000; time_vec++) {
-        G4double time = G4RandGauss::shoot(200.0,40.0);
-        gaussian_times.push_back(time);
-	if (time_vec % 1000 == 0) std::cerr << "processing times" << std::endl;
-      }
-      std::sort(gaussian_times.begin(),gaussian_times.end());
-      for (int part_num = 0; part_num < gaussian_times.size(); part_num++) {
-	if (part_num % 1000 == 0) std::cerr << "processing particles" << std::endl;
-        G4double time = gaussian_times.at(part_num);
-	double xpos = -1112.08*cm;
-	double ypos = 327.084*cm;
-	double zpos = 3600*cm;
-	G4ThreeVector postemp(xpos,ypos,zpos);
-	particleGunTop->SetParticlePosition(postemp);
-	G4double energytemp = 3.0996 * eV; // 400 nm
+      double xpos = 73.2285*cm; // centre of PMT
+      double ypos = 73.2285*cm; // centre of PMT
+      double zpos = -3363.93*cm; // start 15 cm from centre(?) of PMT
+      G4ThreeVector postemp(xpos,ypos,zpos);
+      particleGunTop->SetParticlePosition(postemp);
+      G4double energytemp = 3.0996 * eV; // 400 nm
 
-	G4double costheta = 1- rndm*(1 - std::cos(ledtheta));
-	G4double sintheta = std::sqrt(1. - costheta*costheta);
-	G4double phi = rndm2*2*(std::acos(-1));
-	G4double sinphi = std::sin(phi);
-	G4double cosphi = std::cos(phi);
-	G4double px = sintheta*cosphi;
-	G4double py = sintheta*sinphi;
-	G4double pz = -costheta;
-	G4ThreeVector momtemp(px,py,pz);
-	//particleGunTop->SetParticleTime(time);
-	particleGunTop->SetParticleMomentumDirection(momtemp);
-	particleGunTop->SetParticleEnergy(energytemp);
-	particleGunTop->SetParticlePolarization(G4RandomDirection());
-	particleGunTop->GeneratePrimaryVertex(anEvent);
+      G4double costheta = 1- rndm*(1 - std::cos(0.1*deg));
+      G4double sintheta = std::sqrt(1. - costheta*costheta);
+      G4double phi = rndm2*2*(std::acos(-1));
+      G4double sinphi = std::sin(phi);
+      G4double cosphi = std::cos(phi);
+      G4double px = sintheta*cosphi;
+      G4double py = sintheta*sinphi;
+      G4double pz = costheta; // face up at bottom PMT
+      G4ThreeVector momtemp(px,py,pz);
+      //particleGunTop->SetParticleTime(time);
+      particleGunTop->SetParticleMomentumDirection(momtemp);
+      particleGunTop->SetParticleEnergy(energytemp);
+      particleGunTop->SetParticlePolarization(G4RandomDirection());
+      particleGunTop->GeneratePrimaryVertex(anEvent);
 
-	//	std::cerr << "Position x: " << particleGunTop->GetParticlePosition().x() << " y: " << particleGunTop->GetParticlePosition().y() << " z: " << particleGunTop->GetParticlePosition().z() << std::endl;
-	//std::cerr << "Direction x: " << particleGunTop->GetParticleMomentumDirection().x() << " y: " << particleGunTop->GetParticleMomentumDirection().y() << " z: " << particleGunTop->GetParticleMomentumDirection().z() << std::endl;
-	SetVtx(postemp);
-	SetBeamEnergy(energytemp);
-	SetBeamDir(momtemp.unit());
-	SetBeamPDG(0);
-      }
+      SetVtx(postemp);
+      SetBeamEnergy(energytemp);
+      SetBeamDir(momtemp.unit());
+      SetBeamPDG(0);
+
+
     } else if(useIWCDFullInjectors) {
       //      std::cerr << "Running IWCD injectors with " << c_particle << " photons and a half angle of " << ledtheta << " degrees" << std::endl;
       //------------------------------- Light array ------------------------     
@@ -1141,8 +1133,6 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	  //G4ThreeVector postemp(xpos, ypos, zpos);
 	  G4ThreeVector postempb(xposb,yposb,zposb);
 	  particleGunBarrel->SetParticlePosition(postempb);
-	  //G4double energytempb = 2.505 * eV;
-	  G4double energytempb = 3.0996 * eV; // 400 nm
 	  //G4ThreeVector momtempb(-xposb, -yposb, 0);
 	  G4double rndm = G4UniformRand();
 	  G4double rndm2 = G4UniformRand();
@@ -1167,14 +1157,14 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	  //G4ThreeVector momtempb(px,py,pz);
 	  G4ThreeVector momtempb(finx,finy,finz);
 	  particleGunBarrel->SetParticleMomentumDirection(momtempb);
-	  particleGunBarrel->SetParticleEnergy(energytempb);
+	  particleGunBarrel->SetParticleEnergy(energytemp);
 	  //particleGunBarrel->SetParticleTime(timestep);
 	  //G4ThreeVector targetvector(-xposb,-yposb,0);
 	  G4ThreeVector targetvector(xposb,yposb,0);
 	  particleGunBarrel->SetParticlePolarization(G4RandomDirection());
 	  particleGunBarrel->GeneratePrimaryVertex(anEvent);
 	  SetVtx(postempb);
-	  SetBeamEnergy(energytempb);
+	  SetBeamEnergy(energytemp);
 	  SetBeamDir(momtempb.unit());
 	  SetBeamPDG(0);
 	}
@@ -1198,8 +1188,6 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	    G4ThreeVector postemp(xpos,ypos,zpos);
 	    particleGunTop->SetParticlePosition(postemp);
 	    //particleGun->SetNumberOfParticles(5000);
-	    //	    G4double energytemp = 2.505 * eV;
-	    G4double energytemp = 3.0996 * eV; // 400 nm
 	    G4double rndm = G4UniformRand();
 	    G4double rndm2 = G4UniformRand();
 	    G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));
@@ -1248,8 +1236,6 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	    G4ThreeVector postemp(xpos,ypos,zpos);
 	    particleGunBottom->SetParticlePosition(postemp);
 	    //particleGun->SetNumberOfParticles(5000);
-	    //G4double energytemp = 2.505 * eV;
-	    G4double energytemp = 3.0996 * eV; // 400 nm
 	    G4double rndm = G4UniformRand();
 	    G4double rndm2 = G4UniformRand();
 	    G4double costheta = 1- rndm*(1 - std::cos(ledtheta*deg));

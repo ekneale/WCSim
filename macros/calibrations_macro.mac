@@ -15,12 +15,12 @@
 /WCSim/HyperKOD/ODHeightWaterDepth 2 m
 /WCSim/HyperKOD/ODDeadSpace 600 mm
 /WCSim/HyperKOD/ODTyvekSheetThickness 1 mm
-/WCSim/HyperKOD/ODWLSPlatesThickness 1 cm
-/WCSim/HyperKOD/ODWLSPlatesLength 60 cm
+/WCSim/HyperKOD/ODWLSPlatesThickness 6 mm
+/WCSim/HyperKOD/ODWLSPlatesLength 30 cm
 #/WCSim/HyperKOD/PMTODperCellHorizontal 3
-/WCSim/HyperKOD/PMTODperCellHorizontal 2
-/WCSim/HyperKOD/PMTODperCellVertical 2
-/WCSim/HyperKOD/PMTODPercentCoverage 0.28
+/WCSim/HyperKOD/PMTODperCellHorizontal 0
+/WCSim/HyperKOD/PMTODperCellVertical 0
+/WCSim/HyperKOD/PMTODPercentCoverage 0.22
 #/WCSim/HyperKOD/PMTODPercentCoverage 50
 /WCSim/HyperKOD/ODPMTShift 0 m
 #/WCSim/HyperKOD/DeactivateWLS
@@ -39,9 +39,9 @@
 # 3. The third option means all the QE are applied at the detector
 # Good for the low energy running.
 # 4. Switch off the QE complety, ie. set it at 100%
-/WCSim/PMTQEMethod     Stacking_Only
+#/WCSim/PMTQEMethod     Stacking_Only
 #/WCSim/PMTQEMethod     Stacking_And_SensitiveDetector
-#/WCSim/PMTQEMethod     SensitiveDetector_Only
+/WCSim/PMTQEMethod     SensitiveDetector_Only
 #/WCSim/PMTQEMethod     DoNotApplyQE
 
 #turn on or off the collection efficiency
@@ -98,17 +98,18 @@
 
 
 /mygen/generator calibration
-/mygen/calibrationsource timeTop
-/WCSim/calibrationsource/NumCalibParticles 1
-/WCSim/calibrationsource/CalibSourceHalfAngle 12
+/mygen/calibrationsource fullDiffuse
+/WCSim/calibrationsource/NumCalibParticles 10000
+/WCSim/calibrationsource/CalibSourceHalfAngle 40
+/WCSim/calibrationsource/CalibSourceWavelength 400
 
 
 ## change the name of the output root file, default = wcsim.root
 
-/WCSimIO/RootFile testing_timing.root
+/WCSimIO/RootFile full_diffuse_sources.root
 
 ## set a timer running on WCSimRunAction
 #/WCSimIO/Timer false
 
-/run/beamOn 1
+/run/beamOn 1000
 #exit

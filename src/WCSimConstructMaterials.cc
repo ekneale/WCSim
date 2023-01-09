@@ -181,6 +181,12 @@ void WCSimDetectorConstruction::ConstructMaterials()
   Tyvek->AddElement(elC, 1);  //polyethylene
   Tyvek->AddElement(elH, 2);
 
+  //CPFLAG strut Tyvek
+  G4Material* Strut_Tyvek
+    = new G4Material("Strut_Tyvek",density,2);
+  Strut_Tyvek->AddElement(elC, 1);  //polyethylene
+  Strut_Tyvek->AddElement(elH, 2);
+
   //---PVT - WLS plates eljen EJ-286
   // linear formula [CH2CH(C6H4CH3)]n
   density = 1.023*g/cm3;  // at 20deg
@@ -831,6 +837,15 @@ void WCSimDetectorConstruction::ConstructMaterials()
   OpWaterTySurface->SetFinish(ground); // ground surface with tyvek
   OpWaterTySurface->SetSigmaAlpha(0.2);
 
+  //CPFLAG Copy OpWaterTySurface settings to make OpStrutTySurface with 80% refl
+  OpStrutTySurface =
+      new G4OpticalSurface("StrutTyCellSurface");
+
+  OpStrutTySurface->SetType(dielectric_metal); // Only absorption and reflection
+  OpStrutTySurface->SetModel(unified);
+  OpStrutTySurface->SetFinish(ground); // ground surface with tyvek
+  OpStrutTySurface->SetSigmaAlpha(0.2);
+
   G4double RINDEX_tyvek[NUM] =
       { 1.5, 1.5 }; // polyethylene permittivity is ~2.25
   G4double TySPECULARLOBECONSTANT[NUM] =
@@ -840,6 +855,9 @@ void WCSimDetectorConstruction::ConstructMaterials()
   G4double TyBACKSCATTERCONSTANT[NUM] =
       { 0.0, 0.0 };
   // Lambertian prob is therefore 0.25
+
+  G4double TySPECULARLOBECONSTANTSTRUT[NUM] =
+      { 0.75, 0.75 }; // crudely estimated from A. Chavarria's thesis
 
 #define NUMENTRIES_TY 33 // Number of bins of wavelength to be used for the Tyvek reflectivity
 
@@ -881,6 +899,31 @@ void WCSimDetectorConstruction::ConstructMaterials()
   MPTWater_Ty->AddProperty("BACKSCATTERCONSTANT", PP, TyBACKSCATTERCONSTANT, NUM);
   MPTWater_Ty->AddProperty("REFLECTIVITY",  PP_TyREFLECTIVITY, TyREFLECTIVITY, NUMENTRIES_TY);
   OpWaterTySurface->SetMaterialPropertiesTable(MPTWater_Ty);
+  //CPFLAG making OpStrutTySurface properties
+    G4double StrutTyREFLECTIVITY[NUMENTRIES_TY] = // Strut Tyvek refelctivity
+      { 0.97,
+        0.97, 0.97, 0.97, 0.97, 0.97,
+        0.97, 0.97, 0.97, 0.97, 0.97,
+        0.97, 0.97, 0.97, 0.97, 0.97,
+        0.97, 0.97, 0.97, 0.97, 0.97,
+        0.96, 0.96, 0.95, 0.95, 0.95,
+        0.94, 0.93, 0.92, 0.91, 0.90,
+        0.89, 0.86};
+ 
+    for(int i=0; i<NUMENTRIES_TY; i++)
+      StrutTyREFLECTIVITY[i] *= 0.8/0.97;
+ 
+  G4MaterialPropertiesTable *Strut_MPT_Tyvek = new G4MaterialPropertiesTable();
+  Strut_Tyvek->SetMaterialPropertiesTable(Strut_MPT_Tyvek);
+
+  G4MaterialPropertiesTable *Strut_MPTWater_Ty = new G4MaterialPropertiesTable();
+  Strut_MPTWater_Ty->AddProperty("RINDEX", PP, RINDEX_tyvek, NUM);
+  Strut_MPTWater_Ty->AddProperty("SPECULARLOBECONSTANT", PP, TySPECULARLOBECONSTANTSTRUT, NUM);
+  Strut_MPTWater_Ty->AddProperty("SPECULARSPIKECONSTANT", PP, TySPECULARSPIKECONSTANT, NUM);
+  Strut_MPTWater_Ty->AddProperty("BACKSCATTERCONSTANT", PP, TyBACKSCATTERCONSTANT, NUM);
+  Strut_MPTWater_Ty->AddProperty("REFLECTIVITY",  PP_TyREFLECTIVITY, StrutTyREFLECTIVITY, NUMENTRIES_TY);
+  
+  OpStrutTySurface->SetMaterialPropertiesTable(MPTWater_Ty);
   //
   // ----
 

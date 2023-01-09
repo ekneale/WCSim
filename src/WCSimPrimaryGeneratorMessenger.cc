@@ -35,10 +35,10 @@ WCSimPrimaryGeneratorMessenger::WCSimPrimaryGeneratorMessenger(WCSimPrimaryGener
   //C. Pidcott: Addition of calibration settings
   calibrationSource = new G4UIcmdWithAString("/mygen/calibrationsource",this);
   calibrationSource->SetGuidance("Select optical calibration source.");
-  calibrationSource->SetGuidance(" Available sources : fullInjectors, colBarrel, colBottom, colTop, satBarrel, satTop, timeTop, IWCDfullInjectors");
+  calibrationSource->SetGuidance(" Available sources : fullInjectors, colBarrel, colBottom, colTop, satBarrel, satTop, satBottom, timeTop, IWCDfullInjectors");
   calibrationSource->SetParameterName("calSource",true);
   calibrationSource->SetDefaultValue("fullInjectors");
-  calibrationSource->SetCandidates("fullInjectors colBarrel colBottom satBarrel satTop colTop timeTop IWCDfullInjectors");
+  calibrationSource->SetCandidates("fullInjectors colBarrel colBottom satBarrel satTop satBottom colTop timeTop IWCDfullInjectors");
 
   calSourceNumParticles = new G4UIcmdWithAnInteger("/WCSim/calibrationsource/NumCalibParticles", this);
   calSourceNumParticles->SetGuidance("Set number of photons emitted per calibration source per event");
@@ -50,6 +50,11 @@ WCSimPrimaryGeneratorMessenger::WCSimPrimaryGeneratorMessenger(WCSimPrimaryGener
   calSourceHalfAngle->SetGuidance("Set half angle of light source (degrees)");
   calSourceHalfAngle->SetParameterName("CalibHalfAngle",true);
   calSourceHalfAngle->SetDefaultValue(40);
+
+  calSourceWavelength = new G4UIcmdWithADouble("/WCSim/calibrationsource/CalibSourceWavelength", this);
+  calSourceHalfAngle->SetGuidance("Set wavelength of light source (nm)");
+  calSourceHalfAngle->SetParameterName("CalibWavelength",true);
+  calSourceHalfAngle->SetDefaultValue(400);
 
   fileNameCmdCosmics->SetDefaultValue("data/MuonFlux-HyperK-ThetaPhi.dat");
   
@@ -237,6 +242,7 @@ if( command==calibrationSource )
       myAction->SetCollimatedTop(false);
       myAction->SetSaturationBarrel(false);
       myAction->SetSaturationTop(false);
+      myAction->SetSaturationBottom(false);
       myAction->SetTimeTop(false);
       myAction->SetIWCDFullInjectors(false);
     }
@@ -248,6 +254,7 @@ if( command==calibrationSource )
 	myAction->SetCollimatedTop(false);
 	myAction->SetSaturationBarrel(false);
         myAction->SetSaturationTop(false);
+	myAction->SetSaturationBottom(false);
 	myAction->SetTimeTop(false);
 	myAction->SetIWCDFullInjectors(false);
       }
@@ -259,6 +266,7 @@ if( command==calibrationSource )
 	myAction->SetCollimatedTop(false);
 	myAction->SetSaturationBarrel(false);
         myAction->SetSaturationTop(false);
+	myAction->SetSaturationBottom(false);
         myAction->SetTimeTop(false);
 	myAction->SetIWCDFullInjectors(false);
       }
@@ -270,6 +278,7 @@ if( command==calibrationSource )
 	myAction->SetCollimatedTop(true);
 	myAction->SetSaturationBarrel(false);
         myAction->SetSaturationTop(false);
+	myAction->SetSaturationBottom(false);
 	myAction->SetTimeTop(false);
 	myAction->SetIWCDFullInjectors(false);
       }
@@ -281,6 +290,7 @@ if( command==calibrationSource )
 	myAction->SetCollimatedTop(false);
 	myAction->SetSaturationBarrel(false);
         myAction->SetSaturationTop(true);
+	myAction->SetSaturationBottom(false);
 	myAction->SetTimeTop(false);
 	myAction->SetIWCDFullInjectors(false);
       }
@@ -292,6 +302,19 @@ if( command==calibrationSource )
 	myAction->SetCollimatedTop(false);
 	myAction->SetSaturationBarrel(true);
         myAction->SetSaturationTop(false);
+	myAction->SetSaturationBottom(false);
+	myAction->SetTimeTop(false);
+	myAction->SetIWCDFullInjectors(false);
+      }
+    else if ( newValue == "satBottom")
+      {
+	myAction->SetFullInjectors(false);
+	myAction->SetCollimatedBarrel(false);
+	myAction->SetCollimatedBottom(false);
+	myAction->SetCollimatedTop(false);
+	myAction->SetSaturationBarrel(false);
+        myAction->SetSaturationTop(false);
+	myAction->SetSaturationBottom(true);
 	myAction->SetTimeTop(false);
 	myAction->SetIWCDFullInjectors(false);
       }
@@ -303,6 +326,7 @@ if( command==calibrationSource )
 	myAction->SetCollimatedTop(false);
 	myAction->SetSaturationBarrel(false);
         myAction->SetSaturationTop(false);
+	myAction->SetSaturationBottom(false);
 	myAction->SetTimeTop(true);
 	myAction->SetIWCDFullInjectors(false);
       }
@@ -314,6 +338,7 @@ if( command==calibrationSource )
       myAction->SetCollimatedTop(false);
       myAction->SetSaturationBarrel(false);
       myAction->SetSaturationTop(false);
+      myAction->SetSaturationBottom(false);
       myAction->SetTimeTop(false);
       myAction->SetIWCDFullInjectors(true);
     }
@@ -328,6 +353,11 @@ if( command==calibrationSource )
  if ( command == calSourceHalfAngle )
    {
      myAction->SetCalibrationSourceHalfAngle(calSourceHalfAngle->GetNewDoubleValue(newValue));
+   }
+
+  if ( command == calSourceWavelength )
+   {
+     myAction->SetCalibrationSourceWavelength(calSourceWavelength->GetNewDoubleValue(newValue));
    }
 
 }
@@ -370,6 +400,8 @@ G4String WCSimPrimaryGeneratorMessenger::GetCurrentValue(G4UIcommand* command)
       { cv = "satBarrel"; }
     else if(myAction->IsUsingSaturationTop())
       { cv = "satTop"; }
+    else if(myAction->IsUsingSaturationBottom())
+      { cv = "satBottom"; }
     else if(myAction->IsUsingTimeTop())
       { cv = "timeTop"; }
     else if(myAction->IsUsingIWCDFullInjectors())

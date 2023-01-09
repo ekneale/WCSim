@@ -219,6 +219,9 @@ private:
   //Tyvek surface - jl145
   G4OpticalSurface * OpWaterTySurface;
 
+  //CPFLAG Add lower reflectivity strut Tyvek
+  G4OpticalSurface * OpStrutTySurface;
+
   //WLS surface - jl145
   G4OpticalSurface * OpWaterWLSSurface;
   G4OpticalSurface * OpWLSTySurface;

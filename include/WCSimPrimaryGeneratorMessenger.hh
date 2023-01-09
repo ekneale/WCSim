@@ -35,6 +35,7 @@ class WCSimPrimaryGeneratorMessenger: public G4UImessenger
   G4UIcmdWithAString* calibrationSource;
   G4UIcmdWithAnInteger* calSourceNumParticles;
   G4UIcmdWithADouble*  calSourceHalfAngle;
+  G4UIcmdWithADouble*  calSourceWavelength;
   G4UIcmdWithAString* timeUnitCmd;
   G4UIcmdWithAString* isotopeCmd;
   G4UIcmdWithAString* radonScalingCmd;

@@ -94,6 +94,7 @@ private:
   G4bool   useColBottom;
   G4bool   useColTop;
   G4bool   useSatTop;
+  G4bool   useSatBottom;
   G4bool   useSatBarrel;
   G4bool   useTimeTop;
   G4bool   useIWCDFullInjectors;
@@ -148,6 +149,7 @@ private:
   //C. Pidcott: Calibrations variables
   G4int c_particle;
   G4double ledtheta;
+  G4double calib_wavelength;
 
   // OD Detector radius and height
   double OD_inner_radius;
@@ -193,6 +195,9 @@ private:
   inline void SetSaturationTop(G4bool choice) { useSatTop = choice; }
   inline G4bool IsUsingSaturationTop()  { return useSatTop; }
 
+  inline void SetSaturationBottom(G4bool choice) { useSatBottom = choice; }
+  inline G4bool IsUsingSaturationBottom()  { return useSatBottom; }
+
   inline void SetTimeTop(G4bool choice) { useTimeTop = choice; }
   inline G4bool IsUsingTimeTop()  { return useTimeTop; }
 
@@ -201,6 +206,7 @@ private:
 
   inline void SetNumberCalibrationParticles(G4int choice) { c_particle = choice; }
   inline void SetCalibrationSourceHalfAngle(G4int choice) { ledtheta = choice; }
+  inline void SetCalibrationSourceWavelength(G4int choice) { calib_wavelength = choice; }
 
   inline void OpenVectorFile(G4String fileName) 
   {

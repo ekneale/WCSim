@@ -15,6 +15,7 @@
 #include "G4RotationMatrix.hh"
 #include "G4PVReplica.hh"
 #include "G4PVPlacement.hh"
+#include "G4NistManager.hh"
 #include "G4PVParameterised.hh"
 #include "G4AssemblyVolume.hh"
 #include "G4SubtractionSolid.hh"
@@ -33,6 +34,7 @@
 
 #include "G4SystemOfUnits.hh"
 #include "G4PhysicalConstants.hh"
+#include "CADMesh.hh"
 
 /***********************************************************
  *
@@ -171,7 +173,41 @@ G4LogicalVolume* WCSimDetectorConstruction::ConstructCylinder()
 	 	      0);
 
   if(isODConstructed) {
-    //-----------------------------------------------------
+	/*
+	std::cout<<" ========== construction top cap structure from CAD Model =========="<<std::endl;
+	std::cout<<"reading model from /home/pidcott/OD_calib/calib_devel/WCSim/CADModels/WholeModel.Upper4Rows-NoDome_ascii.stl"<<std::endl;
+	   
+	auto TopStructMesh = CADMesh::TessellatedMesh::FromSTL("/home/pidcott/OD_calib/calib_devel/WCSim/CADModels/WholeModel.Upper4Rows-NoDome_ascii.stl");
+	TopStructMesh->SetScale(1000.0);
+	G4VSolid* TopStructSolid = TopStructMesh->GetSolid();
+	   
+	G4NistManager* manager = G4NistManager::Instance();
+	    G4LogicalVolume* logicTopStruct =
+		  new G4LogicalVolume(TopStructSolid,
+							  manager->FindOrBuildMaterial("G4_STAINLESS-STEEL"), //G4Material::GetMaterial("Blacksheet"),
+							  "TopStructlogic",
+							  0, 0, 0);
+		
+		    G4VPhysicalVolume* physiTopStruct =      
+			  new G4PVPlacement(0,
+								G4ThreeVector(0., 0., 0.5*WCIDHeight + WCBlackSheetThickness + WCODDeadSpace + WCODTyvekSheetThickness + WCODHeightWaterDepth + 1.*m),
+								logicTopStruct,
+								"TopStruct",
+								logicWCBarrel,
+								false,
+								0,
+								true);
+			       
+			//			G4LogicalSkinSurface *TopStructSurface = new G4LogicalSkinSurface("TopStructSurface", logicTopStruct, OpWaterTySurface);
+			G4LogicalSkinSurface *TopStructSurface = new G4LogicalSkinSurface("TopStructSurface", logicTopStruct, OpStrutTySurface);
+			G4VisAttributes* StructColour = new G4VisAttributes(red);
+			StructColour->SetForceWireframe(true);
+			StructColour->SetForceSolid(true);
+			logicTopStruct->SetVisAttributes(StructColour);
+			   
+			std::cout<<" =========== Finished construction onf top cap structure ==========="<<std::endl;
+	*/ 
+   //-----------------------------------------------------
     // Cylinder wall's tyvek
     //-----------------------------------------------------
 
