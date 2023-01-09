@@ -1,0 +1,58 @@
+#!/bin/sh
+
+#cd /home/pidcott/OD_calib/
+#echo "PATH"
+#echo $PATH
+
+source /home/pidcott/OD_calib/calib_devel/env-WCSim.sh
+#echo "PATH"
+#echo $PATH
+SCRATCH_DIR=/scratch/pidcott/
+if [ ! -e $SCRATCH_DIR ]; then mkdir $SCRATCH_DIR; fi
+
+#BASE_DATA_DIR=/data/pidcott/HKOD/Saturation_Tests/10kPMTs_2/top_cap_struts/
+#BASE_DATA_DIR=/data2/pidcott/HKOD/2021merge/Saturation_Tests/top_cap_struts/370nm/SDO/
+#BASE_DATA_DIR=/home/pidcott/OD_calib/calib_devel/WCSim/top_cap_struts/
+#BASE_DATA_DIR=/data2/pidcott/HKOD/2021merge/Top_Cap_Struts_Struts/SDO/
+BASE_DATA_DIR=/data2/pidcott/HKOD/2021merge/Wavelength_Tests/
+#BASE_DATA_DIR=/data2/pidcott/HKOD/2021merge/7_ring_barrel_redo/
+if [ ! -e $BASE_DATA_DIR ]; then mkdir $BASE_DATA_DIR; fi
+
+#MID_DATA_DIR=/data2/pidcott/HKOD/2021merge/Wavelength_Tests/full_diffuse/
+#if [ ! -e $MID_DATA_DIR ]; then mkdir $MID_DATA_DIR; fi
+#DATA_DIR=/data/pidcott/HKOD/Saturation_Tests/10kPMTs_2/90refl_tripleQE_facing_out_diffuse_9000kPhotons/
+#DATA_DIR=/data/pidcott/HKOD/Saturation_Tests/10kPMTs_2/90refl_tripleQE_facing_out_diffuse_9000kPhotons/
+#DATA_DIR=/data/pidcott/HKOD/Saturation_Tests/10kPMTs_2/full_diffuse/90refl_facing_out_diffuse_9000kPhotons/
+#DATA_DIR=/data2/pidcott/HKOD/Saturation_Tests/10kPMTs_2/full_diffuse/370p5nm_90refl_tripleQE_facing_out_diffuse_9000kPhotons/
+#DATA_DIR=/data2/pidcott/HKOD/2021merge/Saturation_Tests/full_diffuse/370nm/SDO/facing_out_90refl_diffuse_9000kPhotons_full_diffuse_structure/
+#DATA_DIR=/data2/pidcott/HKOD/2021merge/Full_Diffuse_Struts/SDO/diffuse_only_refl/
+#DATA_DIR=/home/pidcott/OD_calib/calib_devel/WCSim/full_diffuse/90refl_facing_outa_diffuse_9000kPhotons/
+DATA_DIR=/data2/pidcott/HKOD/2021merge/Wavelength_Tests/barrel/380nm_5/
+#DATA_DIR=$BASE_DATA_DIR
+if [ ! -e $DATA_DIR ]; then mkdir $DATA_DIR; fi
+
+LOG_DIR=/data2/pidcott/HKOD/2021merge/Wavelength_Tests/logs/
+#LOG_DIR=/data2/pidcott/HKOD/2021merge/7_ring_barrel_redo/logs/
+if [ ! -e $LOG_DIR ]; then mkdir $LOG_DIR; fi
+
+JOB_DIR=$SCRATCH_DIR
+if [ ! -e $JOB_DIR ]; then mkdir $JOB_DIR; fi
+
+(>&2 echo `hostname`)
+cd /home/pidcott/OD_calib/calib_devel/WCSim/
+
+WCSim one_diffuse_fibre.mac
+
+root -l -x -b -q 'ReduceODOutput.C("/scratch/pidcott/one_diffuse_barrel_9000k_1ev.root","/scratch/pidcott/reduced_one_diffuse_barrel_9000k_1ev.root")'
+
+
+
+rm /scratch/pidcott/one_diffuse_barrel_9000k_1ev.root
+mv /scratch/pidcott/reduced_one_diffuse_barrel_9000k_1ev.root $DATA_DIR
+#mv /scratch/pidcott/one_diffuse_full_diffuse_9000k_1ev.root $DATA_DIR
+mv /scratch/pidcott/default_diffuse.err $LOG_DIR
+mv /scratch/pidcott/default_diffuse.out $LOG_DIR
+
+#rm 10ev_full_diffuse_fibres.mac
+
+

@@ -1,0 +1,260 @@
+// C++ Includes
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <iostream>
+#include <fstream>
+#include <utility>
+#include <string>
+
+// ROOT Includes
+#include "TH1F.h"
+#include "TH2F.h"
+#include "TFile.h"
+#include "TEllipse.h"
+// Defines
+#define PI 3.141592654
+
+
+/*
+ * To run this script just type:  root -l -x llib.C 'ODAnalysis.C("wcsim.root", "ODHits.root", false)' 
+ * or replace wcsim.root and ODHits.root for your input and output filenames respectively
+ * The final true can be changed to true to turn on verbosity.
+ * The default: root -l -x llib.C ODAnalysis.C will run with the variables mentioned above
+ */
+
+
+
+// A function to convert radians to degress
+float RadToDeg(float x){
+  return x*180/PI;
+}
+// A function to convert degress to radians
+float DegToRad(float x){
+  return x*PI/180;
+}
+
+void mean_plot_threshold( const char *inFileName1 = "wcsim.root", bool verbosity = 0){ 
+	
+
+  // Some nicely formatted text options
+  std::cout << std::scientific; // This causes all numbers to be displayed in scientific notation.
+  std::cout << std::setprecision(2); // Sets the decimal precision (no more than two decimal places)
+  std::cout << std::left; // Sets the text justification to left
+  const int txtW = 20; // Width of "box" holding text
+  const int numW = 10; // Width of "box" holding numbers
+
+
+  // Open the WCSim file
+  TFile *inFile1 = new TFile(inFileName1, "READ"); 
+  if ( !inFile1->IsOpen() ){
+    std::cout << "Error: could not open input file \"" << inFileName1 << "\"." <<std::endl; 
+	
+  } else if (verbosity) {
+    std::cout << "Input file: " << inFileName1 << std::endl;
+  }
+
+  std::vector<Double_t> distance1;
+  std::vector<Double_t> mean1;
+  std::vector<Double_t> mean_err1;
+
+	
+  TTree *inTree = (TTree*)inFile1->Get("Events");
+
+  Long64_t nentries = inTree->GetEntries();
+
+  std::cerr << "Entries " << nentries << std::endl;
+
+  Int_t eventId;
+  Int_t tubeId;
+  //Float_t trueTime;
+  Float_t recTime;
+  Float_t trueNumPhotons;
+  Float_t recCharge;
+  Int_t cylLoc;
+  Float_t pmtX;
+  Float_t pmtY;
+  Float_t pmtZ;
+  Float_t nearestInjDist;
+
+  inTree->SetBranchAddress("eventId",&eventId);
+  inTree->SetBranchAddress("tubeId",&tubeId);
+  //inTree->SetBranchAddress("trueTime",&trueTime);
+  inTree->SetBranchAddress("recTime",&recTime);
+  inTree->SetBranchAddress("trueNumPhotons",&trueNumPhotons);
+  inTree->SetBranchAddress("recCharge",&recCharge);
+  inTree->SetBranchAddress("cylLoc",&cylLoc);
+  inTree->SetBranchAddress("pmtX",&pmtX);
+  inTree->SetBranchAddress("pmtY",&pmtY);
+  inTree->SetBranchAddress("pmtZ",&pmtZ);
+  inTree->SetBranchAddress("nearestInjDist",&nearestInjDist);
+
+  int num_OD_PMT = 0;
+  double max_charge = 0;
+  for (Long64_t i=0; i < nentries; i++) {
+    TLeaf *tubeid = inTree->GetLeaf("tubeId");
+    tubeid->GetBranch()->GetEntry(i);
+    int temp_num_OD_PMT = tubeid->GetValue();
+    if (temp_num_OD_PMT > num_OD_PMT) num_OD_PMT = temp_num_OD_PMT;
+    TLeaf *recCharge = inTree->GetLeaf("recCharge");
+    recCharge->GetBranch()->GetEntry(i);
+    double charge = recCharge->GetValue();
+    if (charge > max_charge) max_charge = charge;
+  }  
+
+  std::cerr << "num PMTs " << num_OD_PMT << std::endl;
+  std::cerr << "max charge " << max_charge << std::endl;
+
+  //  int nbPEMaxByPMT = 2000;
+  int nbPEMaxByPMT = max_charge*0.75;
+
+  TF1 *poiss = new TF1("poiss","[0]*TMath::Poisson(x,[1])",0,nbPEMaxByPMT);
+  TF1 *poiss1 = new TF1("poiss1","[0]*TMath::Poisson(x,[1])",0,nbPEMaxByPMT/4);
+  TF1 *poiss2 = new TF1("poiss2","[0]*TMath::Poisson(x,[1])",0,nbPEMaxByPMT/8);
+
+  //--------------------- Tree ready to use -------------------
+
+  // Basic histograms
+  
+  TH1F** QPerPMT = new TH1F*[(int)num_OD_PMT];
+  for (int i=0; i<num_OD_PMT; i++) {
+    QPerPMT[i] = new TH1F(Form("tq%d",i),"test1",5*(nbPEMaxByPMT+20),-10,nbPEMaxByPMT+10);
+  }
+
+
+  int n = inTree->Draw("eventId:tubeId:trueTime:recTime:trueNumPhotons:recCharge:cylLoc:pmtX:pmtY:pmtZ:nearestInjDist","","goff");
+
+  std::vector<double> tube_inj_dists(num_OD_PMT);
+  std::vector<double> xpos(num_OD_PMT);
+  std::vector<double> ypos(num_OD_PMT);
+  std::vector<double> zpos(num_OD_PMT);
+  std::vector<double> cyl(num_OD_PMT);
+
+  double barrelposx = -99999;
+  double barrelposy = -99999;
+  double toppos = -99999;
+
+  for (Long64_t i=0; i < n; i++) {
+    //
+    inTree->GetEntry(i);
+
+    if (cylLoc == 4) {
+      barrelposx = pmtX;
+      barrelposy = pmtY;
+    }
+    if (cylLoc == 5) {
+      toppos = pmtZ;
+    }
+    //    std::cerr << tubeId << "  " << trueNumPhotons << std::endl;
+    if (recCharge > 0) QPerPMT[tubeId-1]->Fill(recCharge);
+    tube_inj_dists.at(tubeId-1) = nearestInjDist;
+    xpos.at(tubeId-1) = pmtX;
+    ypos.at(tubeId-1) = pmtY;
+    zpos.at(tubeId-1) = pmtZ;
+    cyl.at(tubeId-1) = cylLoc;
+    //    if (recCharge > 1500) std::cerr << pmtX << ", " << pmtY << ", " << pmtZ << std::endl;
+    
+  }
+
+  double RadiusOD = sqrt( pow(barrelposx,2) + pow(barrelposy,2) );
+  double HeightOD = 2*(abs(toppos));
+
+  //facing out barrel
+  double source_x = 3256.21;
+  double source_y = 647.7;
+  double source_z = 60.0;
+  
+  //facing out top
+  /*  double source_x = 800*(std::cos(3*(std::acos(-1)/12)));
+  double source_y = 800*(std::sin(3*(std::acos(-1)/12)));
+  double source_z = 3362.01;
+  */
+  for (Int_t i=0; i<num_OD_PMT; i++) {
+    
+    if (QPerPMT[i]->GetEntries() > 0) {
+      double pmtRad = sqrt((pow(xpos.at(i), 2.0))+(pow(ypos.at(i), 2.0)));
+      double pmtTheta = std::atan(ypos.at(i)/xpos.at(i));
+      double l = sqrt((pow((0-xpos.at(i)),2)) + pow((-(HeightOD/2)-ypos.at(i)),2));
+      double angle = 2*asin(l/2*RadiusOD);
+      double length = angle*RadiusOD;
+      
+      double distance = sqrt((source_x-xpos.at(i))*(source_x-xpos.at(i)) + (source_y-ypos.at(i))*(source_y-ypos.at(i)) + (source_z-zpos.at(i))*(source_z-zpos.at(i)));
+      if (distance <= 150) {
+	poiss->SetParameter(0,QPerPMT[i]->GetBinContent(QPerPMT[i]->GetMaximumBin()));
+	poiss->SetParameter(1,QPerPMT[i]->GetMean());
+	TFitResultPtr r = QPerPMT[i]->Fit(poiss,"SRQ");
+	Double_t par1 = r->Parameter(1);
+	Double_t par0 = r->Parameter(0);
+	Double_t err_par1 = r->ParError(1);
+	distance1.push_back(distance);
+	mean1.push_back(par1);
+	mean_err1.push_back(err_par1);
+	//	  std::cerr << "QPerPMT[i]->GetBinContent(QPerPMT[i]->GetMaximumBin()) " << QPerPMT[i]->GetBinContent(QPerPMT[i]->GetMaximumBin()) << ", QPerPMT[i]->GetMean() " << QPerPMT[i]->GetMean() << ", par1 " << par1 << std::endl;
+	//	  std::cerr << "distance " << distance << ", tube_inj_dists.at(i) " << tube_inj_dists.at(i) << std::endl;
+	//std::cerr << "distance " << distance << ", fit mean : " << par1 << ", hist mean : " << QPerPMT[i]->GetMean() << std::endl;
+	//std::cerr << i+1 << " QPerPMT[i]->GetEntries() " << QPerPMT[i]->GetEntries() << ", QPerPMT[i]->GetBinContent(QPerPMT[i]->GetMaximumBin()) " << QPerPMT[i]->GetBinContent(QPerPMT[i]->GetMaximumBin()) << " , QPerPMT[i]->GetMean() " << QPerPMT[i]->GetMean() << ", fit mean " << par1 << std::endl;
+	//std::cerr << i+1 << " normalisation " << par0 << std::endl;
+	  
+      }
+      else if (distance > 150 && distance <= 450) {
+	poiss1->SetParameter(0,QPerPMT[i]->GetBinContent(QPerPMT[i]->GetMaximumBin()));
+	poiss1->SetParameter(1,QPerPMT[i]->GetMean());
+	TFitResultPtr r = QPerPMT[i]->Fit(poiss1,"SRQ");
+	Double_t par1 = r->Parameter(1);
+	Double_t par0 = r->Parameter(0);
+	Double_t err_par1 = r->ParError(1);
+	distance1.push_back(distance);
+	mean1.push_back(par1);
+	mean_err1.push_back(err_par1);
+	//std::cerr << i+1 << " QPerPMT[i]->GetEntries() " << QPerPMT[i]->GetEntries() << ", QPerPMT[i]->GetBinContent(QPerPMT[i]->GetMaximumBin()) " << QPerPMT[i]->GetBinContent(QPerPMT[i]->GetMaximumBin()) << " , QPerPMT[i]->GetMean() " << QPerPMT[i]->GetMean() << ", fit mean " << par1 << std::endl;
+	//std::cerr << i+1 << " normalisation " << par0 << std::endl;
+
+      }
+      else if (distance > 450 && distance < 850) { 
+	poiss2->SetParameter(0,QPerPMT[i]->GetBinContent(QPerPMT[i]->GetMaximumBin()));
+	poiss2->SetParameter(1,QPerPMT[i]->GetMean());
+	TFitResultPtr r = QPerPMT[i]->Fit(poiss2,"SRQ");
+	Double_t par1 = r->Parameter(1);
+	Double_t par0 = r->Parameter(0);
+	Double_t err_par1 = r->ParError(1);
+	distance1.push_back(distance);
+	mean1.push_back(par1);
+	mean_err1.push_back(err_par1);
+      }
+    }
+  }
+
+    TCanvas *c3 = new TCanvas("c3","Mean charge as a function of distance from source",800,600);
+   
+  TGraphErrors *ge1 = new TGraphErrors(distance1.size(), &(distance1[0]), &(mean1[0]), 0, &(mean_err1[0]) );
+  
+  gStyle->SetOptStat(0);
+  gStyle->SetOptTitle(kFALSE);
+  gStyle->SetPalette(55);
+
+  ge1->SetMarkerColor(4);
+  ge1->SetMarkerSize(0.9);
+  ge1->SetMarkerStyle(20);
+  ge1->GetXaxis()->SetRangeUser(0,850);
+  ge1->GetYaxis()->SetTitle("Mean digitised charge");
+  ge1->GetXaxis()->SetTitle("Distance between PMT and injector (cm)");
+  ge1->Draw("AP");
+  TLine *line = new TLine(0,200,850,200);
+  line->SetLineColor(kRed);
+  //  line->SetLineStyle(8);
+  line->Draw();
+/*
+  TCanvas *poissmeanQdistvev = new TCanvas("pmQdv","pmQdv",800,600);
+  poiss_mean_Q_vs_dist_vs_events->GetXaxis()->SetRangeUser(0,850);
+  //  poiss_mean_Q_vs_dist_vs_events->GetYaxis()->SetRangeUser(0,1000);
+  poiss_mean_Q_vs_dist_vs_events->SetXTitle("Distance between PMT and nearest injector (cm)");
+  poiss_mean_Q_vs_dist_vs_events->SetYTitle("Mean Digitised Charge");
+  poiss_mean_Q_vs_dist_vs_events->SetMarkerStyle(6);
+  poiss_mean_Q_vs_dist_vs_events->Draw("COLZ");
+  TLine *line = new TLine(0,200,850,200);
+  line->SetLineColor(kRed);
+  line->Draw();
+  */
+
+}
+

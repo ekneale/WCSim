@@ -1,0 +1,360 @@
+// C++ Includes
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <iostream>
+#include <fstream>
+
+
+
+// ROOT Includes
+#include "TH1F.h"
+#include "TH2F.h"
+#include "TFile.h"
+
+// WCSim Includes
+#include "include/WCSimRootEvent.hh"
+#include "include/WCSimRootGeom.hh"
+
+// Defines
+#define PI 3.141592654
+
+
+Double_t PMT_Injector_Distance(double pmt[3], std::vector<std::vector<double>> injector) {
+  Double_t distance = 999999;
+  for (int i = 0; i < injector.size(); i++) {
+    std::vector<double> temp_inj = injector.at(i);
+    double injx = temp_inj[0];
+    double injy = temp_inj[1];
+    double injz = temp_inj[2];
+
+    //std::cerr << " IX " << injx << " IY " << injy << " IZ " << injz << std::endl;
+    //std::cerr << " PX " << pmt[0] << " PY " << pmt[1] << " PZ " << pmt[2] << std::endl;
+    
+    Double_t xsquared = pow((pmt[0] - injx),2.0);
+    Double_t ysquared = pow((pmt[1] - injy),2.0);
+    Double_t zsquared = pow((pmt[2] - injz),2.0);
+    Double_t temp_dist = sqrt(xsquared + ysquared + zsquared);
+    //std::cerr << distance << " " << temp_dist << std::endl;
+    if (temp_dist < distance) distance = temp_dist;
+    //std::cerr << distance << std::endl;
+  }
+  return distance;
+    
+}
+
+
+
+// A function to convert radians to degress
+float RadToDeg(float x){
+  return x*180/PI;
+}
+// A function to convert degress to radians
+float DegToRad(float x){
+  return x*PI/180;
+}
+// A function to load the libraries required, from WCSim.
+void loadlibs(){
+
+  char *wcsimdirenv; 
+  wcsimdirenv = getenv("WCSIMDIR"); 
+	
+  if (wcsimdirenv != NULL) {
+    gSystem->Load("$WCSIMDIR/libWCSimRoot.so");
+    gSystem->Load("$WCSIMDIR/libWCSimRoot.rootmap");
+    //gSystem->Load("$WCSIMDIR/libWCSimRootDict_rdict.pcm");
+    //gSystem->Load("$WCSIMDIR/HitEvent_cxx.so");
+    //gSystem->Load("$WCSIMDIR/HitEvent_cxx_ACLiC_dict_rdict.pcm");
+  } else {
+    std::cout << "Error: WCSIMDIR environment variable not set." << std::endl;
+  }
+
+
+}// End of loadlibs function
+
+void ReduceODOutput( const char *inFileName = "wcsim.root", const char *outFileName = "reduced_output.root", bool verbosity = 0){ 
+	
+  loadlibs(); // Load the required libraries
+
+  // Some nicely formatted text options
+  std::cout << std::scientific; // This causes all numbers to be displayed in scientific notation.
+  std::cout << std::setprecision(2); // Sets the decimal precision (no more than two decimal places)
+  std::cout << std::left; // Sets the text justification to left
+  const int txtW = 20; // Width of "box" holding text
+  const int numW = 10; // Width of "box" holding numbers
+
+
+  // Open the WCSim file
+  TFile *inFile = new TFile(inFileName, "READ"); 
+  if ( !inFile->IsOpen() ){
+    std::cout << "Error: could not open input file \"" << inFileName << "\"." <<std::endl; 
+	
+  } else if (verbosity) {
+    std::cout << "Input file: " << inFileName << std::endl;
+  }
+  
+  // Get a pointer to the tree from the input file
+  TTree *wcsimTree = (TTree*) inFile->Get("wcsimT");
+	
+  // Get the number of events in the tree
+  long int nEvent = wcsimTree->GetEntries();
+  if (verbosity) { std::cout << "Number of events: "<< nEvent << std::endl;}
+
+  // Create a WCSimRootEvent to put stuff from the tree in
+  WCSimRootEvent *wcsimRoot = new WCSimRootEvent();
+	
+  // Set the branch address for reading from the tree
+  TBranch *branch = wcsimTree->GetBranch("wcsimrootevent_OD");
+  branch->SetAddress(&wcsimRoot);
+
+  // Force deletion to prevent memory leak
+  wcsimTree->GetBranch("wcsimrootevent_OD")->SetAutoDelete(kTRUE); 
+
+    // Load the geometry tree (only 1 "event")
+  TTree* geoTree = (TTree*) inFile->Get("wcsimGeoT"); 
+  WCSimRootGeom *wcsimrootgeom = 0;
+  geoTree->SetBranchAddress("wcsimrootgeom", &wcsimrootgeom);
+  if (verbosity) {std::cout << "Geotree has " << geoTree->GetEntries() << " entries." << std::endl;}
+  geoTree->GetEntry(0);
+
+  //------------------------------------------------------------- INJ POS
+
+  std::vector<std::vector<double>> barrelpos;
+  std::vector<std::vector<double>> bottompos;
+  std::vector<std::vector<double>> toppos;
+
+  // Injector positions
+  double maxr = 3317.01;
+  double rad1 = 800;
+  double rad2 = 1810;
+  double rad3 = 2800;
+  double xposb = -9999;
+  double yposb = -9999;
+  double zposb = -9999;
+
+  // barrel
+  for(int ip = 0; ip < 5; ip++) {
+    if (ip==0) zposb = 2700;
+    if (ip==1) zposb = 1350;
+    if (ip==2) zposb = 60;
+    if (ip==3) zposb = -1350;
+    if (ip==4) zposb = -2700;
+    for(int theta = 0; theta < 16; theta++) {
+      std::vector<double> single_barrel_pos (3);
+      if (ip == 1 || ip == 3) {
+	xposb = maxr*(std::cos(theta*(std::acos(-1))/8));
+	yposb = maxr*(std::sin(theta*(std::acos(-1))/8));
+      }
+      else {
+	xposb = maxr*(std::cos((theta+0.5)*(std::acos(-1))/8));
+	yposb = maxr*(std::sin((theta+0.5)*(std::acos(-1))/8));
+      }
+      single_barrel_pos.at(0) = xposb;
+      single_barrel_pos.at(1) = yposb;
+      single_barrel_pos.at(2) = zposb;
+      barrelpos.push_back(single_barrel_pos);
+    }
+  }
+
+  // bottom
+  for (int i = 0; i < 3; i++) {
+    double zpos = -3362.01;
+    double xpos = 0.;
+    double ypos = 0.;
+    //G4ThreeVector postemp(0, 0, zpos);
+    if (i==0) {
+      for (int angfrac1 = 0; angfrac1 < 3; angfrac1++) {
+	xpos = rad1*(std::cos((angfrac1*8 + 3)*(std::acos(-1)/12)));
+	ypos = rad1*(std::sin((angfrac1*8 + 3)*(std::acos(-1)/12)));
+
+	std::vector<double> single_bottom_pos (3);
+	single_bottom_pos.at(0) = xpos;
+	single_bottom_pos.at(1) = ypos;
+	single_bottom_pos.at(2) = zpos;
+	bottompos.push_back(single_bottom_pos);
+
+      }
+    }
+    if (i==1) {
+      for (int angfrac2 = 0; angfrac2 < 6; angfrac2++) {
+	std::vector<double> single_bottom_pos (3);
+	xpos = rad2*(std::cos((angfrac2*4 + 1)*(std::acos(-1)/12)));
+	ypos = rad2*(std::sin((angfrac2*4 + 1)*(std::acos(-1)/12)));
+	single_bottom_pos.at(0) = xpos;
+	single_bottom_pos.at(1) = ypos;
+	single_bottom_pos.at(2) = zpos;
+	bottompos.push_back(single_bottom_pos);
+      }
+    }
+    if (i==2) {
+      for (int angfrac3 = 0; angfrac3 < 12; angfrac3++) {
+	std::vector<double> single_bottom_pos (3);
+	xpos = rad3*(std::cos((angfrac3)*(std::acos(-1)/6)));
+	ypos = rad3*(std::sin((angfrac3)*(std::acos(-1)/6)));
+	single_bottom_pos.at(0) = xpos;
+	single_bottom_pos.at(1) = ypos;
+	single_bottom_pos.at(2) = zpos;
+	bottompos.push_back(single_bottom_pos);
+      }
+    }
+  }
+
+  // top
+  for (int i = 0; i < 3; i++) {
+    double zpos = 3362.01;
+    double xpos = 0.;
+    double ypos = 0.;
+    if (i==0) {
+      for (int angfrac1 = 0; angfrac1 < 3; angfrac1++) {
+	std::vector<double> single_top_pos (3);
+	xpos = rad1*(std::cos((angfrac1*8 + 3)*(std::acos(-1)/12)));
+	ypos = rad1*(std::sin((angfrac1*8 + 3)*(std::acos(-1)/12)));
+	single_top_pos.at(0) = xpos;
+	single_top_pos.at(1) = ypos;
+	single_top_pos.at(2) = zpos;
+	toppos.push_back(single_top_pos);
+
+      }
+    }
+    if (i==1) {
+      for (int angfrac2 = 0; angfrac2 < 6; angfrac2++) {
+	std::vector<double> single_top_pos (3);
+	xpos = rad2*(std::cos((angfrac2*4 + 1)*(std::acos(-1)/12)));
+	ypos = rad2*(std::sin((angfrac2*4 + 1)*(std::acos(-1)/12)));
+	single_top_pos.at(0) = xpos;
+	single_top_pos.at(1) = ypos;
+	single_top_pos.at(2) = zpos;
+	toppos.push_back(single_top_pos);
+      }
+    }
+    if (i==2) {
+      for (int angfrac3 = 0; angfrac3 < 12; angfrac3++) {
+	std::vector<double> single_top_pos (3);
+	xpos = rad3*(std::cos((angfrac3)*(std::acos(-1)/6)));
+	ypos = rad3*(std::sin((angfrac3)*(std::acos(-1)/6)));
+	single_top_pos.at(0) = xpos;
+	single_top_pos.at(1) = ypos;
+	single_top_pos.at(2) = zpos;
+	toppos.push_back(single_top_pos);
+      }
+    }
+  }
+  
+  //------------------------------------------------------------- INJ POS
+
+
+  double num_OD_PMT = wcsimrootgeom->GetODWCNumPMT();
+	
+  // Start with the main trigger as it always exists and contains most of the info 
+  WCSimRootTrigger *wcsimTrigger; 
+	
+  // Create an output file
+  TFile *outFile = new TFile(outFileName, "RECREATE");
+  
+  TTree *outBranch = new TTree("Events", "Events");
+
+  Int_t eventId;
+  Int_t tubeId;
+  Float_t trueTime;
+  Float_t recTime;
+  Float_t trueNumPhotons;
+  Float_t recCharge;
+  Int_t cylLoc;
+  Float_t pmtX;
+  Float_t pmtY;
+  Float_t pmtZ;
+  Float_t nearestInjDist;
+
+  outBranch->Branch("eventId",&eventId,"eventId/I");
+  outBranch->Branch("tubeId",&tubeId,"tubeId/I");
+  outBranch->Branch("trueTime",&trueTime,"trueTime/F");
+  outBranch->Branch("recTime",&recTime,"recTime/F");
+  outBranch->Branch("trueNumPhotons",&trueNumPhotons,"trueNumPhotons/F");
+  outBranch->Branch("recCharge",&recCharge,"recCharge/F");
+  outBranch->Branch("cylLoc",&cylLoc,"cylLoc/I");
+  outBranch->Branch("pmtX",&pmtX,"pmtX/F");
+  outBranch->Branch("pmtY",&pmtY,"pmtY/F");
+  outBranch->Branch("pmtZ",&pmtZ,"pmtZ/F");
+  outBranch->Branch("nearestInjDist",&nearestInjDist,"nearestInjDist/F");
+
+  for (int ev = 0; ev < nEvent; ev++){ // Loop over events
+    if (ev % 50 == 0) std::cerr << "Event # " << ev << std::endl; 
+
+    wcsimTree->GetEntry(ev);
+    wcsimTrigger = wcsimRoot->GetTrigger(0);
+    int numTriggers = wcsimRoot->GetNumberOfEvents();
+    int numSubTriggers = wcsimRoot->GetNumberOfSubEvents();	
+    int event = ev;
+
+    if (verbosity) { // output the information of each event
+	
+      std::cout << "=================================================" << std::endl; 
+      std::cout <<  std::left << std::setw(txtW) << "Event:" << std::right << std::setw(numW) << ev << std::endl; 
+      std::cout <<  std::left << std::setw(txtW) << "Triggers:     " <<  std::right << std::setw(numW) << numTriggers << std::endl; 
+      std::cout <<  std::left << std::setw(txtW) << "Sub Triggers: " <<  std::right << std::setw(numW) << numSubTriggers << std::endl; 
+
+    } // End of if statement
+		
+    for (int nTrig = 0; nTrig < numTriggers; nTrig++){
+
+      wcsimTrigger = wcsimRoot->GetTrigger(nTrig); 
+      int numTracks = wcsimTrigger->GetNtrack();
+      WCSimRootTrack * track = (WCSimRootTrack*) wcsimTrigger->GetTracks()->At(0);
+
+
+      double numPMTsHit = wcsimTrigger->GetNcherenkovhits(); //Returns the number of PMTs with a true hit (photon or dark noise) (QE applied)
+      double numPMTsDigiHit = wcsimTrigger->GetNcherenkovdigihits();
+
+      // Work out the number of photons that hit the PMTs
+      for (int i = 0; i < numPMTsHit; i++){
+			
+	WCSimRootCherenkovHit *cherenkovHit = (WCSimRootCherenkovHit*) wcsimTrigger->GetCherenkovHits()->At(i);
+	//float tmpRawHits = cherenkovHit->GetTotalPe(1);
+	eventId = ev;
+	tubeId = cherenkovHit->GetTubeID();
+	WCSimRootCherenkovHitTime *cHitTime =
+	  (WCSimRootCherenkovHitTime*)wcsimTrigger->GetCherenkovHitTimes()->At(i);
+	trueTime = cHitTime->GetTruetime();
+	trueNumPhotons = cherenkovHit->GetTotalPe(1);
+	WCSimRootPMT pmt = wcsimrootgeom->GetPMT(tubeId-1);
+	pmtX = pmt.GetPosition(0);
+	pmtY = pmt.GetPosition(1);
+	pmtZ = pmt.GetPosition(2);
+	cylLoc = pmt.GetCylLoc();
+
+	// Work out the number of digitised hits in the PMTs
+	for (int j = 0; j < numPMTsDigiHit; j++){
+	  //std::cerr << "looping through digi hits" << std::endl;
+			
+	  WCSimRootCherenkovDigiHit *cherenkovDigiHit = (WCSimRootCherenkovDigiHit*) wcsimTrigger->GetCherenkovDigiHits()->At(j);
+	  if (tubeId == cherenkovDigiHit->GetTubeId()) {
+	    recCharge = cherenkovDigiHit->GetQ();
+	    recTime = cherenkovDigiHit->GetT();
+	    break;
+	  }
+	}  // End of for loop working out number of digitized hits in PMTs
+
+	
+
+	double pmtXYZ[3] = {pmtX, pmtY, pmtZ};
+	nearestInjDist = PMT_Injector_Distance(pmtXYZ, toppos);
+
+	outBranch->Fill();
+
+      } // End of for loop working out number of photons in PMTs
+
+    } // End of loop over triggers
+
+  } // End of loop over events
+
+  std::cerr << "outBranch->GetEntries() " << outBranch->GetEntries() << std::endl;
+
+  //outBranch->Print();
+
+  outBranch->Write();
+
+  //outFile->Write(); // Write all of objects to the output file.
+  //outFile->Close(); // Close the output file.
+
+}
+

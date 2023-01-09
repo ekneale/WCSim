@@ -1,0 +1,25 @@
+for j in {1..1000}
+do
+    file=/data2/pidcott/HKOD/2021merge/Wavelength_Tests/barrel/380nm_5/reduced_one_diffuse_barrel_9000k_1ev_${j}.root
+    #file=/data2/pidcott/HKOD/2021merge/7_ring_barrel_redo/reduced_SDO_full_diffuse_10k_10ev_${j}.root
+    if [ -f "$file" ]; then
+	echo "$file exists"
+    else
+	cp /home/pidcott/OD_calib/calib_devel/WCSim/submitWCSim.sh /home/pidcott/OD_calib/calib_devel/WCSim/submitWCSim_${j}.sh
+	cp /home/pidcott/OD_calib/calib_devel/WCSim/one_diffuse_fibre.mac /home/pidcott/OD_calib/calib_devel/WCSim/one_diffuse_fibre_${j}.mac
+
+	sleep 4
+
+	sed -i "s/seed 3254/seed 32545$j/" /home/pidcott/OD_calib/calib_devel/WCSim/one_diffuse_fibre_${j}.mac
+	sed -i "s/one_diffuse_barrel_9000k_1ev.root/one_diffuse_barrel_9000k_1ev_${j}.root/" /home/pidcott/OD_calib/calib_devel/WCSim/one_diffuse_fibre_${j}.mac
+
+	sed -i "s/one_diffuse_barrel_9000k_1ev.root/one_diffuse_barrel_9000k_1ev_${j}.root/" /home/pidcott/OD_calib/calib_devel/WCSim/submitWCSim_${j}.sh
+	sed -i "s/reduced_one_diffuse_barrel_9000k_1ev.root/reduced_one_diffuse_barrel_9000k_1ev_${j}.root/" /home/pidcott/OD_calib/calib_devel/WCSim/submitWCSim_${j}.sh
+	sed -i "s/one_diffuse_fibre.mac/one_diffuse_fibre_${j}.mac/" /home/pidcott/OD_calib/calib_devel/WCSim/submitWCSim_${j}.sh
+	sed -i "s/default_diffuse.err/default_diffuse_${j}.err/" /home/pidcott/OD_calib/calib_devel/WCSim/submitWCSim_${j}.sh
+	sed -i "s/default_diffuse.out/default_diffuse_${j}.out/" /home/pidcott/OD_calib/calib_devel/WCSim/submitWCSim_${j}.sh
+	#sed -i "s/local_water_params.mac/local_water_params_$count.mac/" /home/pidcott/OD_calib/calib_devel/WCSim/submitWCSim_${count}_${j}.sh
+
+	condor_qsub /home/pidcott/OD_calib/calib_devel/WCSim/submitWCSim_${j}.sh -e /scratch/pidcott/default_diffuse_${j}.err -o /scratch/pidcott/default_diffuse_${j}.out
+	fi
+done;
