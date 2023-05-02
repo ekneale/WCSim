@@ -175,9 +175,10 @@ G4LogicalVolume* WCSimDetectorConstruction::ConstructCylinder()
   if(isODConstructed) {
 	/*
 	std::cout<<" ========== construction top cap structure from CAD Model =========="<<std::endl;
-	std::cout<<"reading model from /home/pidcott/OD_calib/calib_devel/WCSim/CADModels/WholeModel.Upper4Rows-NoDome_ascii.stl"<<std::endl;
+        std::string wcsimdir = std::string(getenv("WCSIMDIR"));
+	std::cout<<"reading model from " << wcsimdir << "/CADModels/WholeModel.Upper4Rows-NoDome_ascii.stl"<<std::endl;
 	   
-	auto TopStructMesh = CADMesh::TessellatedMesh::FromSTL("/home/pidcott/OD_calib/calib_devel/WCSim/CADModels/WholeModel.Upper4Rows-NoDome_ascii.stl");
+	auto TopStructMesh = CADMesh::TessellatedMesh::FromSTL( (wcsimdir + "/CADModels/WholeModel.Upper4Rows-NoDome_ascii.stl").c_str() );
 	TopStructMesh->SetScale(1000.0);
 	G4VSolid* TopStructSolid = TopStructMesh->GetSolid();
 	   
@@ -206,8 +207,8 @@ G4LogicalVolume* WCSimDetectorConstruction::ConstructCylinder()
 			logicTopStruct->SetVisAttributes(StructColour);
 			   
 			std::cout<<" =========== Finished construction onf top cap structure ==========="<<std::endl;
-	*/ 
-   //-----------------------------------------------------
+	*/
+    //-----------------------------------------------------
     // Cylinder wall's tyvek
     //-----------------------------------------------------
 

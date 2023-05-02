@@ -43,17 +43,20 @@ int main(int argc,char** argv)
   // Set up the tuning parameters that need to be read before the detector
   //  construction is done
   WCSimTuningParameters* tuningpars = new WCSimTuningParameters();
+  
+  std::string wcsimdir = std::string(getenv("WCSIMDIR"));
+  std::cout << "WCSIMDIR : " << wcsimdir << std::endl;
 
   // Get the tuning parameters
   if (argc < 3) {
-    file_exists("macros/tuning_parameters.mac");
-    UI->ApplyCommand("/control/execute macros/tuning_parameters.mac");
+    std::string macro_name = wcsimdir + "/macros/tuning_parameters.mac";
+    file_exists(macro_name.c_str());
+    std::string macro_run = "/control/execute " + macro_name;
+    UI->ApplyCommand( macro_run.c_str() );
   } else {
     G4String command = "/control/execute ";
     G4String fileName = argv[2];
-
     file_exists(fileName);
-
     UI->ApplyCommand(command+fileName);
   }
 
@@ -75,8 +78,8 @@ int main(int argc,char** argv)
 
   // Currently, default physics list is set to FTFP_BERT
   // The custom WCSim physics list option is removed in versions later than WCSim1.6.0
-  file_exists("macros/jobOptions.mac");
-  UI->ApplyCommand("/control/execute macros/jobOptions.mac");
+  file_exists( (wcsimdir + "/macros/jobOptions.mac").c_str() );
+  UI->ApplyCommand( ("/control/execute " + wcsimdir + "/macros/jobOptions.mac").c_str() );
 
   // Initialize the physics factory to register the selected physics.
   physFactory->InitializeList();
