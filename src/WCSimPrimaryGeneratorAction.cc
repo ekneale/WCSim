@@ -511,7 +511,7 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
     if(useFullInjectors) {
 
-      //	std::cerr << "Running all injectors with " << c_particle << " photons and a half angle of " << ledtheta << " degrees" << std::endl;
+      //std::cerr << "Running all injectors with " << c_particle << " photons and a half angle of " << ledtheta << " degrees" << std::endl;
       //------------------------------- Light array ------------------------     
       particleGunBarrel->SetParticleDefinition(G4OpticalPhoton::Definition());
       particleGunBarrel->SetNumberOfParticles(c_particle);
@@ -917,7 +917,7 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
     //--------------------------------- Barrel collimator -------------------------
     else if(useColBarrel) {
-      //std::cerr << "Running barrel with " << c_particle << " photons and a half angle of " << ledtheta << " degrees" << std::endl;
+      std::cerr << "Running barrel with " << c_particle << " photons with a wavelength of " << calib_wavelength << " and a half angle of " << ledtheta << " degrees" << std::endl;
       // ------------------------- collimated barrel --------------------
       particleGunBarrel->SetParticleDefinition(G4OpticalPhoton::Definition());
       particleGunBarrel->SetNumberOfParticles(c_particle);
@@ -952,8 +952,8 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
     else if(useColBottom) {
       // ---------------- single collimated bottom cap pointing across -----
+      std::cerr << "Running bottom with " << c_particle << " photons with a wavelength of " << calib_wavelength << " and a half angle of " << ledtheta << " degrees" << std::endl;
 
-      //	std::cerr << "Running bottom with " << c_particle << " photons and a half angle of " << ledtheta << " degrees" << std::endl;
       particleGunBottom->SetParticleDefinition(G4OpticalPhoton::Definition());
       particleGunBottom->SetNumberOfParticles(c_particle);
       double xpos = 3302.01*cm;//OD_inner_radius;
@@ -994,7 +994,7 @@ void WCSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
     //---------------------- Top Cap Collimator
     else if(useColTop) {
 
-      //	std::cerr << "Running top with " << c_particle << " photons and a half angle of " << ledtheta << " degrees" << std::endl;
+      std::cerr << "Running top with " << c_particle << " photons with a wavelength of " << calib_wavelength << " and a half angle of " << ledtheta << " degrees" << std::endl;
       particleGunTop->SetParticleDefinition(G4OpticalPhoton::Definition());
       particleGunTop->SetNumberOfParticles(c_particle);
       double xpos = 3308.03*cm;//OD_inner_radius;

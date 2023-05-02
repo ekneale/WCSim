@@ -52,11 +52,12 @@ WCSimPrimaryGeneratorMessenger::WCSimPrimaryGeneratorMessenger(WCSimPrimaryGener
   calSourceHalfAngle->SetDefaultValue(40);
 
   calSourceWavelength = new G4UIcmdWithADouble("/WCSim/calibrationsource/CalibSourceWavelength", this);
-  calSourceHalfAngle->SetGuidance("Set wavelength of light source (nm)");
-  calSourceHalfAngle->SetParameterName("CalibWavelength",true);
-  calSourceHalfAngle->SetDefaultValue(400);
+  calSourceWavelength->SetGuidance("Set wavelength of light source (nm)");
+  calSourceWavelength->SetParameterName("CalibWavelength",true);
+  calSourceWavelength->SetDefaultValue(400);
 
-  fileNameCmdCosmics->SetDefaultValue("data/MuonFlux-HyperK-ThetaPhi.dat");
+  std::string wcsimdir = std::string(getenv("WCSIMDIR"));
+  fileNameCmdCosmics->SetDefaultValue( std::string(wcsimdir + "/data/MuonFlux-HyperK-ThetaPhi.dat").c_str() );
   
   timeUnitCmd = new G4UIcmdWithAString("/mygen/time_unit",this);
   timeUnitCmd->SetGuidance("Define the units used for time in the input file.");
@@ -232,7 +233,7 @@ void WCSimPrimaryGeneratorMessenger::SetNewValue(G4UIcommand * command,G4String 
     G4cout << "Time unit set to " << newValue << G4endl;
   }
 
-if( command==calibrationSource )
+  if( command==calibrationSource )
   {
     if (newValue == "fullInjectors")
     {
@@ -345,20 +346,20 @@ if( command==calibrationSource )
 
   }
 
- if ( command == calSourceNumParticles )
-   {
-     myAction->SetNumberCalibrationParticles(calSourceNumParticles->GetNewIntValue(newValue));
-   }
+  if ( command == calSourceNumParticles )
+  {
+    myAction->SetNumberCalibrationParticles(calSourceNumParticles->GetNewIntValue(newValue));
+  }
 
- if ( command == calSourceHalfAngle )
-   {
-     myAction->SetCalibrationSourceHalfAngle(calSourceHalfAngle->GetNewDoubleValue(newValue));
-   }
+  if ( command == calSourceHalfAngle )
+  {
+    myAction->SetCalibrationSourceHalfAngle(calSourceHalfAngle->GetNewDoubleValue(newValue));
+  }
 
   if ( command == calSourceWavelength )
-   {
-     myAction->SetCalibrationSourceWavelength(calSourceWavelength->GetNewDoubleValue(newValue));
-   }
+  {
+    myAction->SetCalibrationSourceWavelength(calSourceWavelength->GetNewDoubleValue(newValue));
+  }
 
 }
 

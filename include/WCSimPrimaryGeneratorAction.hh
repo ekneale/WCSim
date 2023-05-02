@@ -104,7 +104,8 @@ private:
   std::fstream inputFile;
   std::fstream inputCosmicsFile;
   G4String vectorFileName;
-  G4String cosmicsFileName = "data/MuonFlux-HyperK-ThetaPhi.dat";
+  std::string wcsimdir = std::string(getenv("WCSIMDIR"));
+  G4String cosmicsFileName = wcsimdir + "/data/MuonFlux-HyperK-ThetaPhi.dat";
   G4bool   GenerateVertexInRock;
   
   // Variables for Radioactive and Radon generators
@@ -205,8 +206,8 @@ private:
   inline G4bool IsUsingIWCDFullInjectors()  { return useIWCDFullInjectors; }
 
   inline void SetNumberCalibrationParticles(G4int choice) { c_particle = choice; }
-  inline void SetCalibrationSourceHalfAngle(G4int choice) { ledtheta = choice; }
-  inline void SetCalibrationSourceWavelength(G4int choice) { calib_wavelength = choice; }
+  inline void SetCalibrationSourceHalfAngle(G4double choice) { ledtheta = choice; }
+  inline void SetCalibrationSourceWavelength(G4double choice) { calib_wavelength = choice; }
 
   inline void OpenVectorFile(G4String fileName) 
   {
