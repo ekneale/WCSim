@@ -7,7 +7,7 @@
 /WCSim/random/seed 3254
 
 # HyperK
-/WCSim/WCgeom HyperK_HybridmPMT_WithOD
+/WCSim/WCgeom HyperK_HybridmPMT_WithOD_Realistic
 
 # HyperK Outer Detector
 /WCSim/HyperKOD/PMTODRadius 3inch

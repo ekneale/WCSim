@@ -47,6 +47,7 @@ class WCSimLIGen
         vector<double> intensity;
         
         G4double injectorWavelength;
+        G4double injectorPulseWidth;
         G4double injectorOffset;
         G4double energy;
 

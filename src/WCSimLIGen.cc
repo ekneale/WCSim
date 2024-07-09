@@ -22,8 +22,7 @@ WCSimLIGen::WCSimLIGen(){
 WCSimLIGen::~WCSimLIGen(){
 
     // things to delete
-    delete myLIGun;
-    if(hProfile) delete hProfile;
+    if (myLIGun) delete myLIGun;
 }
 
 
@@ -74,8 +73,10 @@ void WCSimLIGen::ReadFromDatabase(G4String injectorType, G4String injectorIdx, G
     for (auto injector : data["injectors"]){
         if ( injector["type"].get<string>()==injectorType && G4String(injector["idx"].get<string>())==injectorIdx ){
 
-            G4cout << "Simulating events from " << injector["type"].get<string>() << " " << injector["idx"].get<string>() << G4endl;
+            G4cout << "LIGen: Simulating events from " << injector["type"].get<string>() << " " << injector["idx"].get<string>() << G4endl;
             injectorWavelength = injector["wavelength"].get<double>();
+            injectorPulseWidth = injector["pulsewidth"].get<double>();
+            G4cout << "with wavelength " << injectorWavelength << " and pulse width " << injectorPulseWidth << G4endl;
             injectorPosition = injector["position"].get<vector<double>>();
             injectorDirection = injector["direction"].get<vector<double>>();
             injectorOffset = injector["offset"].get<double>();
@@ -142,7 +143,7 @@ void WCSimLIGen::LoadPhotonList(){
 
 void WCSimLIGen::LoadProfilePDF(){
 
-    G4cout << "Reading the injector profile from file" << G4endl;
+    G4cout << "LIGen: Reading the injector profile from file" << G4endl;
 
     // Creates histogram of light injector profile
     float thetaMin = thetaVals[0];
@@ -157,7 +158,7 @@ void WCSimLIGen::LoadProfilePDF(){
         int bin = hProfile->FindBin(thetaVals[i],phiVals[i]);
         hProfile->SetBinContent(bin, intensity[i]);
     }
-    G4cout << "Profile filled." << G4endl;
+    G4cout << "LIGen: Profile filled." << G4endl;
 }
 
 
@@ -170,8 +171,10 @@ void WCSimLIGen::GeneratePhotons(G4Event* anEvent,G4int nphotons){
     if (photonMode){
         // Get the position and direction from the photon list
         for (int iphoton=0;iphoton<nphotons;iphoton++){
-            // Generate random time for this photon in 1 ns pulse window
-            G4double time = G4RandFlat::shoot(20.0,21.0)*ns;
+            // Generate random time for this photon assuming
+            // Gaussian pulse width with given FWHM pulse width in ns
+            // and 20 ns offset to avoid negative times
+            G4double time = G4RandGauss::shoot(20.0,injectorPulseWidth+20.0)*ns;
 
             G4ThreeVector vtx = {myPhotons[iphoton].x,myPhotons[iphoton].y,myPhotons[iphoton].z};
             G4ThreeVector dir = {myPhotons[iphoton].px,myPhotons[iphoton].py,myPhotons[iphoton].pz};
@@ -209,8 +212,9 @@ void WCSimLIGen::GeneratePhotons(G4Event* anEvent,G4int nphotons){
         // Now generate the photon positions and directions
         for (int iphoton = 0; iphoton<nphotons; iphoton++){
  
-            // Generate random time for this photon in 1 ns pulse window
-            G4double time = G4RandFlat::shoot(20.0,21.0)*ns;
+            // Generate random time for this photon in pulse window
+            // of injector FWHM pulse width in ns
+            G4double time = G4RandFlat::shoot(20.0,injectorPulseWidth+20.0)*ns;
          
             // Get a random theta and phi from the LI profile
             double theta;
