@@ -660,9 +660,11 @@ G4LogicalVolume* WCSimDetectorConstruction::ConstructRealisticPlacement()
     multipmt_central_rotation->rotateZ(270*deg);
 
     // For the OD PMT we instead need to make it face outwards from the white tyvek in the OD.
+    // Rotating with respect to ID PMT orientation
     G4ThreeVector odpmt_central_position = G4ThreeVector(config.WhiteTyvekOuterRadius+2*cm,0.0,0.0);
-    G4RotationMatrix* pmtod_central_rotation = new G4RotationMatrix;
-    pmtod_central_rotation->rotateY(270*deg);
+    G4RotationMatrix* pmtod_central_rotation = pmt_central_rotation;
+    pmtod_central_rotation->rotateX(180*deg);
+    pmtod_central_rotation->rotateY(180*deg);
 
     auto pmt20_offset_placement = new G4AssemblyVolume();
     pmt20_offset_placement->AddPlacedVolume(pmt20_dummy_logic, pmt_central_position, pmt_central_rotation);
@@ -993,11 +995,13 @@ G4LogicalVolume* WCSimDetectorConstruction::ConstructRealisticPlacement()
     // Now we can place the end caps, Top first.
     // -----------------
     G4ThreeVector topcappos = G4ThreeVector(0.0,0.0,config.InnerDetectorBarrelLength/2);
+    // pointing down
     G4RotationMatrix* topcaprot = new G4RotationMatrix();
     endcap_assembly->MakeImprint( InnerDetectorLogic, topcappos, topcaprot);
-
+    // pointing up
     G4ThreeVector topcapposod = G4ThreeVector(0.0,0.0,config.WhiteTyvekBarrelLength/2);
     G4RotationMatrix* topcaprotod = new G4RotationMatrix();
+    topcaprotod->rotateX(180*deg);
     endcap_assembly_od->MakeImprint( OuterDetectorLogic, topcapposod, topcaprotod);
 
     int pmt20_count_barrel_and_top    = CountLogicalChildren(InnerDetectorLogic, pmt20_dummy_logic);
@@ -1010,14 +1014,14 @@ G4LogicalVolume* WCSimDetectorConstruction::ConstructRealisticPlacement()
 
     // Now cap the other side
     // -----------------
+    // pointing down
     G4ThreeVector botcappos = G4ThreeVector(0.0,0.0,-config.InnerDetectorBarrelLength/2);
     G4RotationMatrix* botcaprot = new G4RotationMatrix();
     botcaprot->rotateX(180*deg);
     endcap_assembly->MakeImprint( InnerDetectorLogic, botcappos, botcaprot);
-
+    // pointing up
     G4ThreeVector botcapposod = G4ThreeVector(0.0,0.0,-config.WhiteTyvekBarrelLength/2);
     G4RotationMatrix* botcaprotod = new G4RotationMatrix();
-    botcaprotod->rotateX(180*deg);
     endcap_assembly_od->MakeImprint( OuterDetectorLogic, botcapposod, botcaprotod);
 
     // Do some final sumation
