@@ -662,7 +662,7 @@ G4LogicalVolume* WCSimDetectorConstruction::ConstructRealisticPlacement()
     // For the OD PMT we instead need to make it face outwards from the white tyvek in the OD.
     // Rotating with respect to ID PMT orientation
     G4ThreeVector odpmt_central_position = G4ThreeVector(config.WhiteTyvekOuterRadius+2*cm,0.0,0.0);
-    G4RotationMatrix* pmtod_central_rotation = pmt_central_rotation;
+    G4RotationMatrix* pmtod_central_rotation = new G4RotationMatrix(*pmt_central_rotation);
     pmtod_central_rotation->rotateX(180*deg);
     pmtod_central_rotation->rotateY(180*deg);
 
